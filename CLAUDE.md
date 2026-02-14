@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Curately is an AI-curated personal tech newsletter. It collects articles from RSS feeds daily, scores them against user interests using Gemini 2.5 Flash, generates Korean summaries, and serves a web UI for browsing, liking, bookmarking, and tracking interest trends over time.
 
-**Status**: Phase 2 complete — RSS collection pipeline and feed CRUD implemented.
+**Status**: Phase 3 complete — RSS collection, AI scoring, and summarization implemented.
 
 ## Tech Stack
 
@@ -60,14 +60,17 @@ RSS Feeds → **Collector** (feedparser, dedup by source_url) → **Scorer** (Ge
 - `main.py` — FastAPI app entrypoint
 - `config.py` — Loads `config.yaml` + `.env` into typed settings
 - `supabase_client.py` — Supabase client initialization
-- `scheduler.py` — APScheduler daily pipeline (06:00) + weekly Rewind (Sunday)
-- `routers/` — API route handlers: auth, newsletters, articles, feeds, interests, rewind
-- `services/` — Business logic:
+- `scheduler.py` — APScheduler daily pipeline (06:00) + weekly Rewind (Sunday) *(stub)*
+- `routers/` — API route handlers
+  - `feeds.py` — Feed CRUD (list, create, delete, update)
+  - `articles.py`, `auth.py`, `interests.py`, `newsletters.py`, `rewind.py` — *(stubs)*
+- `services/` — Business logic
   - `collector.py` — RSS fetch & deduplication
-  - `scorer.py` — Gemini relevance scoring (batched, 5–10 articles per call)
-  - `summarizer.py` — Summary generation (basic + detailed on bookmark)
-  - `interests.py` — Interest profile updates & time decay (0.9 factor per 7 days)
-  - `rewind.py` — Weekly trend analysis & report generation
+  - `scorer.py` — Gemini batch relevance scoring (0.0–1.0, configurable batch size)
+  - `summarizer.py` — Korean summary generation (basic 2–3 sentences + detailed with background/takeaways/keywords)
+- `scripts/` — Utility scripts
+  - `check_no_korean.py` — Pre-commit hook: blocks Hangul in Python files
+  - `check_commit_msg_no_korean.py` — Commit-msg hook: blocks Hangul in commit messages
 
 ### Frontend Structure (`frontend/src/`)
 
@@ -155,7 +158,7 @@ See `docs/plans/implementation-phases.md` for the full phase plan.
 |-------|--------|
 | Phase 1: Project Foundation | Done |
 | Phase 2: RSS Collection Pipeline | Done |
-| Phase 3: AI Pipeline (Scoring & Summarization) | Not started |
+| Phase 3: AI Pipeline (Scoring & Summarization) | Done |
 | Phase 4: Daily Pipeline & Newsletter API | Not started |
 | Phase 5: User Interactions & Feedback Loop | Not started |
 | Phase 6: Rewind Weekly Analysis | Not started |
