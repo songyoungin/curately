@@ -99,7 +99,11 @@ Uses `ruff` for both linting and formatting (no `black`):
 - **ruff** — lint + auto-fix (`--fix --exit-non-zero-on-fix`)
 - **ruff-format** — code formatting (replaces black)
 - **mypy** — static type checking (`--ignore-missing-imports`)
+- **no-korean-in-code** — blocks Hangul characters in Python files (exempt with `# noqa: korean-ok`)
+- **no-korean-in-commit-msg** — blocks Hangul characters in commit messages (runs on `commit-msg` stage)
 - Standard hooks: trailing-whitespace, end-of-file-fixer, check-yaml/json/toml, debug-statements, etc.
+
+> After cloning, run `uv run pre-commit install && uv run pre-commit install --hook-type commit-msg` to enable all hooks including commit message checks.
 
 ## Coding Patterns
 

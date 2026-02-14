@@ -15,6 +15,19 @@ repos:
       - id: check-docstring-first
       - id: debug-statements
 
+  - repo: local
+    hooks:
+      - id: no-korean-in-code
+        name: block Korean in code
+        entry: python scripts/check_no_korean.py
+        language: python
+        types: [python]
+      - id: no-korean-in-commit-msg
+        name: block Korean in commit message
+        entry: python scripts/check_commit_msg_no_korean.py
+        language: python
+        stages: [commit-msg]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.1
     hooks:
