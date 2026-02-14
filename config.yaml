@@ -1,0 +1,33 @@
+# Curately Configuration
+
+feeds:
+  - name: "Hacker News"
+    url: "https://hnrss.org/frontpage"
+  - name: "TechCrunch"
+    url: "https://techcrunch.com/feed/"
+  - name: "The Verge"
+    url: "https://www.theverge.com/rss/index.xml"
+  - name: "Ars Technica"
+    url: "https://feeds.arstechnica.com/arstechnica/index"
+  - name: "MIT Technology Review"
+    url: "https://www.technologyreview.com/feed/"
+
+schedule:
+  daily_pipeline_hour: 6
+  daily_pipeline_minute: 0
+  rewind_day_of_week: "sun"
+  rewind_hour: 23
+  rewind_minute: 0
+
+pipeline:
+  relevance_threshold: 0.3
+  max_articles_per_newsletter: 20
+  scoring_batch_size: 10
+
+interests:
+  decay_factor: 0.9
+  decay_interval_days: 7
+  like_weight_increment: 1.0
+
+gemini:
+  model: "gemini-2.5-flash"
