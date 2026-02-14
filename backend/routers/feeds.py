@@ -1,6 +1,7 @@
 """Feed management route handlers."""
 
 import logging
+from typing import Any, cast
 from urllib.parse import urlparse
 
 import feedparser
@@ -57,17 +58,17 @@ async def _validate_feed_url(url: str) -> None:
 
 
 @router.get("", response_model=list[FeedResponse])
-async def list_feeds() -> list[dict]:
+async def list_feeds() -> list[dict[str, Any]]:
     """등록된 모든 피드 목록을 반환한다."""
     supabase = get_supabase_client()
     result = (
         supabase.table("feeds").select("*").order("created_at", desc=True).execute()
     )
-    return result.data
+    return cast(list[dict[str, Any]], result.data)
 
 
 @router.post("", response_model=FeedResponse, status_code=status.HTTP_201_CREATED)
-async def create_feed(body: FeedCreate) -> dict:
+async def create_feed(body: FeedCreate) -> dict[str, Any]:
     """새로운 RSS 피드를 등록한다.
 
     Args:
@@ -87,7 +88,7 @@ async def create_feed(body: FeedCreate) -> dict:
     result = (
         supabase.table("feeds").insert({"name": body.name, "url": body.url}).execute()
     )
-    return result.data[0]
+    return cast(dict[str, Any], result.data[0])
 
 
 @router.delete("/{feed_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -110,7 +111,7 @@ async def delete_feed(feed_id: int) -> None:
 
 
 @router.patch("/{feed_id}", response_model=FeedResponse)
-async def update_feed(feed_id: int, body: FeedUpdate) -> dict:
+async def update_feed(feed_id: int, body: FeedUpdate) -> dict[str, Any]:
     """피드의 활성 상태를 변경한다.
 
     Args:
@@ -132,4 +133,4 @@ async def update_feed(feed_id: int, body: FeedUpdate) -> dict:
         .eq("id", feed_id)
         .execute()
     )
-    return result.data[0]
+    return cast(dict[str, Any], result.data[0])

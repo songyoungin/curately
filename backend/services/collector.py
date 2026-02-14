@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 
 import feedparser
 import httpx
+from typing import Any, cast
+
 from supabase import Client
 
 logger = logging.getLogger(__name__)
@@ -73,12 +75,12 @@ async def collect_articles(client: Client) -> list[dict]:
     return new_articles
 
 
-def _get_active_feeds(client: Client) -> list[dict]:
+def _get_active_feeds(client: Client) -> list[dict[str, Any]]:
     """활성 상태인 피드 목록을 조회한다."""
     response = (
         client.table("feeds").select("id, name, url").eq("is_active", True).execute()
     )
-    return response.data
+    return cast(list[dict[str, Any]], response.data)
 
 
 async def _fetch_and_parse_feed(
@@ -141,7 +143,8 @@ def _deduplicate(client: Client, articles: list[dict]) -> list[dict]:
     response = (
         client.table("articles").select("source_url").in_("source_url", urls).execute()
     )
-    existing_urls = {row["source_url"] for row in response.data}
+    rows = cast(list[dict[str, Any]], response.data)
+    existing_urls = {row["source_url"] for row in rows}
     return [a for a in articles if a["source_url"] not in existing_urls]
 
 
