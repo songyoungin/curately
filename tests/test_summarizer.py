@@ -22,19 +22,19 @@ from backend.services.summarizer import (
 _SAMPLE_TITLE = "OpenAI Releases GPT-5 with Multimodal Capabilities"
 _SAMPLE_CONTENT = "OpenAI has announced the release of GPT-5, featuring..."
 
-_BASIC_SUMMARY_RESPONSE = (
-    "OpenAI가 멀티모달 기능을 갖춘 GPT-5를 출시했습니다. "
-    "이번 모델은 텍스트, 이미지, 오디오를 동시에 처리할 수 있어 "
-    "기술 전문가들에게 큰 영향을 미칠 것으로 보입니다."
+_BASIC_SUMMARY_RESPONSE = (  # noqa: korean-ok
+    "OpenAI가 멀티모달 기능을 갖춘 GPT-5를 출시했습니다. "  # noqa: korean-ok
+    "이번 모델은 텍스트, 이미지, 오디오를 동시에 처리할 수 있어 "  # noqa: korean-ok
+    "기술 전문가들에게 큰 영향을 미칠 것으로 보입니다."  # noqa: korean-ok
 )
 
 _DETAILED_SUMMARY_RESPONSE = json.dumps(
     {
-        "background": "OpenAI가 GPT-5를 출시하며 AI 업계에 큰 변화를 예고했습니다.",
+        "background": "OpenAI가 GPT-5를 출시하며 AI 업계에 큰 변화를 예고했습니다.",  # noqa: korean-ok
         "takeaways": [
-            "멀티모달 처리 능력이 대폭 향상되었습니다.",
-            "추론 성능이 이전 모델 대비 크게 개선되었습니다.",
-            "API 가격이 인하되어 접근성이 높아졌습니다.",
+            "멀티모달 처리 능력이 대폭 향상되었습니다.",  # noqa: korean-ok
+            "추론 성능이 이전 모델 대비 크게 개선되었습니다.",  # noqa: korean-ok
+            "API 가격이 인하되어 접근성이 높아졌습니다.",  # noqa: korean-ok
         ],
         "keywords": ["GPT-5", "multimodal", "LLM", "OpenAI"],
     },
@@ -91,7 +91,7 @@ def test_parse_detailed_summary_valid_json() -> None:
     result = _parse_detailed_summary(_DETAILED_SUMMARY_RESPONSE)
     assert (
         result["background"]
-        == "OpenAI가 GPT-5를 출시하며 AI 업계에 큰 변화를 예고했습니다."
+        == "OpenAI가 GPT-5를 출시하며 AI 업계에 큰 변화를 예고했습니다."  # noqa: korean-ok
     )
     assert len(result["takeaways"]) == 3
     assert len(result["keywords"]) == 4
