@@ -44,6 +44,8 @@ cd curately
 # Backend
 cp .env.example .env          # Fill in your API keys
 uv sync                       # Install Python dependencies
+uv run pre-commit install     # Install pre-commit hooks
+uv run pre-commit install --hook-type commit-msg
 
 # Frontend
 cd frontend
@@ -81,14 +83,19 @@ npm run dev
 curately/
 ├── backend/
 │   ├── main.py               # FastAPI entrypoint
-│   ├── routers/              # API route handlers
-│   ├── services/             # Business logic (collector, scorer, summarizer)
-│   └── scheduler.py          # Daily pipeline scheduling
-├── frontend/
-│   └── src/
-│       ├── pages/            # Today, Archive, Bookmarks, Rewind, Settings
-│       └── components/       # Shared UI components
-├── tests/                    # pytest test suite
+│   ├── config.py             # Settings from config.yaml + .env
+│   ├── supabase_client.py    # Supabase client initialization
+│   ├── routers/
+│   │   └── feeds.py          # Feed CRUD endpoints
+│   ├── services/
+│   │   ├── collector.py      # RSS fetch & deduplication
+│   │   ├── scorer.py         # Gemini batch relevance scoring
+│   │   └── summarizer.py     # Korean summary generation
+│   └── schemas/              # Pydantic request/response models
+├── scripts/
+│   ├── check_no_korean.py          # Pre-commit: block Korean in code
+│   └── check_commit_msg_no_korean.py  # Pre-commit: block Korean in commits
+├── tests/                    # pytest test suite (72 tests)
 ├── config.yaml               # RSS feeds & app configuration
 └── docs/plans/               # Design & implementation documents
 ```
