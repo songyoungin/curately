@@ -24,10 +24,10 @@ SAMPLE_FEED = {
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_list_feeds_returns_all(mock_get_client: MagicMock) -> None:
-    """피드 목록 조회 시 모든 피드를 반환한다.
+    """Verify all feeds are returned when listing.
 
-    Mock: Supabase feeds.select().order().execute() → 피드 1건.
-    검증: 200 상태코드, 피드 목록 반환.
+    Mock: Supabase feeds.select().order().execute() returns 1 feed.
+    Expects: 200 status, feed list returned.
     """
     mock_client = MagicMock()
     mock_client.table.return_value.select.return_value.order.return_value.execute.return_value = MagicMock(
@@ -46,10 +46,10 @@ def test_list_feeds_returns_all(mock_get_client: MagicMock) -> None:
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_list_feeds_empty(mock_get_client: MagicMock) -> None:
-    """등록된 피드가 없으면 빈 리스트를 반환한다.
+    """Verify empty list is returned when no feeds are registered.
 
-    Mock: Supabase feeds.select().order().execute() → 빈 리스트.
-    검증: 200 상태코드, 빈 리스트.
+    Mock: Supabase feeds.select().order().execute() returns empty list.
+    Expects: 200 status, empty list.
     """
     mock_client = MagicMock()
     mock_client.table.return_value.select.return_value.order.return_value.execute.return_value = MagicMock(
@@ -71,10 +71,10 @@ def test_list_feeds_empty(mock_get_client: MagicMock) -> None:
 def test_create_feed_success(
     mock_validate: AsyncMock, mock_get_client: MagicMock
 ) -> None:
-    """유효한 피드 생성 시 201과 생성된 피드를 반환한다.
+    """Verify 201 and created feed are returned on valid feed creation.
 
-    Mock: _validate_feed_url (통과), Supabase duplicate check (없음), insert.
-    검증: 201 상태코드, 피드 데이터, validate 호출.
+    Mock: _validate_feed_url passes, Supabase duplicate check (none), insert.
+    Expects: 201 status, feed data, validate called.
     """
     mock_table = MagicMock()
     mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
@@ -95,20 +95,20 @@ def test_create_feed_success(
 
 
 def test_create_feed_invalid_url_format() -> None:
-    """잘못된 URL 형식으로 피드 생성 시 400을 반환한다.
+    """Verify 400 is returned for invalid URL format.
 
-    Mock: 없음 (URL 형식 검증은 urlparse 기반 순수 로직).
-    검증: 400 상태코드.
+    Mock: None (URL format validation uses pure urlparse logic).
+    Expects: 400 status.
     """
     response = client.post("/api/feeds", json={"name": "Bad", "url": "not-a-url"})
     assert response.status_code == 400
 
 
 def test_create_feed_invalid_url_ftp_scheme() -> None:
-    """http/https가 아닌 scheme의 URL은 400을 반환한다.
+    """Verify 400 is returned for URLs with non-http/https schemes.
 
-    Mock: 없음 (URL 형식 검증은 urlparse 기반 순수 로직).
-    검증: 400 상태코드.
+    Mock: None (URL format validation uses pure urlparse logic).
+    Expects: 400 status.
     """
     response = client.post(
         "/api/feeds", json={"name": "FTP", "url": "ftp://example.com/feed"}
@@ -121,10 +121,10 @@ def test_create_feed_invalid_url_ftp_scheme() -> None:
 def test_create_feed_duplicate_url(
     mock_validate: AsyncMock, mock_get_client: MagicMock
 ) -> None:
-    """이미 존재하는 URL로 피드 생성 시 409를 반환한다.
+    """Verify 409 is returned when creating a feed with an existing URL.
 
-    Mock: _validate_feed_url (통과), Supabase duplicate check (존재).
-    검증: 409 상태코드.
+    Mock: _validate_feed_url passes, Supabase duplicate check (exists).
+    Expects: 409 status.
     """
     mock_table = MagicMock()
     mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
@@ -149,10 +149,10 @@ def test_create_feed_duplicate_url(
     ),
 )
 def test_create_feed_unparseable_rss(mock_validate: AsyncMock) -> None:
-    """파싱할 수 없는 RSS URL로 피드 생성 시 422를 반환한다.
+    """Verify 422 is returned when RSS URL cannot be parsed.
 
-    Mock: _validate_feed_url (422 HTTPException 발생).
-    검증: 422 상태코드.
+    Mock: _validate_feed_url raises 422 HTTPException.
+    Expects: 422 status.
     """
     response = client.post(
         "/api/feeds", json={"name": "Bad RSS", "url": "https://example.com/page"}
@@ -169,10 +169,10 @@ def test_create_feed_unparseable_rss(mock_validate: AsyncMock) -> None:
     ),
 )
 def test_create_feed_unreachable_url(mock_validate: AsyncMock) -> None:
-    """접속 불가능한 URL로 피드 생성 시 422를 반환한다.
+    """Verify 422 is returned when feed URL is unreachable.
 
-    Mock: _validate_feed_url (422 HTTPException 발생 - fetch 실패).
-    검증: 422 상태코드.
+    Mock: _validate_feed_url raises 422 HTTPException (fetch failure).
+    Expects: 422 status.
     """
     response = client.post(
         "/api/feeds",
@@ -186,10 +186,10 @@ def test_create_feed_unreachable_url(mock_validate: AsyncMock) -> None:
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_delete_feed_success(mock_get_client: MagicMock) -> None:
-    """존재하는 피드 삭제 시 204를 반환한다.
+    """Verify 204 is returned when deleting an existing feed.
 
-    Mock: Supabase select (존재), delete.
-    검증: 204 상태코드.
+    Mock: Supabase select (exists), delete.
+    Expects: 204 status.
     """
     mock_table = MagicMock()
     mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
@@ -206,10 +206,10 @@ def test_delete_feed_success(mock_get_client: MagicMock) -> None:
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_delete_feed_not_found(mock_get_client: MagicMock) -> None:
-    """존재하지 않는 피드 삭제 시 404를 반환한다.
+    """Verify 404 is returned when deleting a non-existent feed.
 
-    Mock: Supabase select (없음).
-    검증: 404 상태코드.
+    Mock: Supabase select (empty).
+    Expects: 404 status.
     """
     mock_table = MagicMock()
     mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(
@@ -228,10 +228,10 @@ def test_delete_feed_not_found(mock_get_client: MagicMock) -> None:
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_update_feed_toggle_active(mock_get_client: MagicMock) -> None:
-    """피드 활성 상태를 비활성으로 변경 시 업데이트된 피드를 반환한다.
+    """Verify updated feed is returned when toggling active status to inactive.
 
-    Mock: Supabase select (존재), update.
-    검증: 200 상태코드, is_active=False.
+    Mock: Supabase select (exists), update.
+    Expects: 200 status, is_active=False.
     """
     updated_feed = {**SAMPLE_FEED, "is_active": False}
     mock_table = MagicMock()
@@ -253,10 +253,10 @@ def test_update_feed_toggle_active(mock_get_client: MagicMock) -> None:
 
 @patch("backend.routers.feeds.get_supabase_client")
 def test_update_feed_not_found(mock_get_client: MagicMock) -> None:
-    """존재하지 않는 피드 수정 시 404를 반환한다.
+    """Verify 404 is returned when updating a non-existent feed.
 
-    Mock: Supabase select (없음).
-    검증: 404 상태코드.
+    Mock: Supabase select (empty).
+    Expects: 404 status.
     """
     mock_table = MagicMock()
     mock_table.select.return_value.eq.return_value.execute.return_value = MagicMock(

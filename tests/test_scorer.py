@@ -34,7 +34,7 @@ def _make_settings(
     model: str = "gemini-2.5-flash",
     batch_size: int = 10,
 ) -> MagicMock:
-    """테스트용 Settings mock을 생성한다."""
+    """Create a mock Settings object for testing."""
     settings = MagicMock()
     settings.gemini_api_key = api_key
     settings.gemini.model = model
@@ -43,7 +43,7 @@ def _make_settings(
 
 
 def _make_gemini_response(results: list[dict]) -> str:
-    """Gemini 응답 JSON 문자열을 생성한다."""
+    """Create a Gemini response JSON string."""
     return json.dumps({"results": results})
 
 
@@ -65,7 +65,7 @@ def _make_scoring_result(
 
 
 def test_build_scoring_prompt_with_interests() -> None:
-    """관심사가 있을 때 프롬프트에 관심사 키워드와 가중치가 포함된다."""
+    """Verify that interest keywords and weights are included in the prompt."""
     articles = [_make_article("AI News", "GPT-5 released")]
     interests = [_make_interest("AI", 5.0), _make_interest("LLM", 3.0)]
 
@@ -78,7 +78,7 @@ def test_build_scoring_prompt_with_interests() -> None:
 
 
 def test_build_scoring_prompt_without_interests() -> None:
-    """관심사가 없을 때 일반 기술 관련성 기준으로 스코어링하도록 안내한다."""
+    """Verify that general tech relevance guidance is used when no interests exist."""
     articles = [_make_article()]
     prompt = _build_scoring_prompt(articles, [])
 
@@ -87,7 +87,7 @@ def test_build_scoring_prompt_without_interests() -> None:
 
 
 def test_build_scoring_prompt_truncates_long_content() -> None:
-    """500자를 초과하는 기사 본문이 잘리고 '...'이 추가된다."""
+    """Verify that content exceeding 500 chars is truncated with '...' appended."""
     long_content = "a" * 1000
     articles = [_make_article(raw_content=long_content)]
 
@@ -98,7 +98,7 @@ def test_build_scoring_prompt_truncates_long_content() -> None:
 
 
 def test_build_scoring_prompt_handles_none_content() -> None:
-    """raw_content가 None인 기사도 에러 없이 처리된다."""
+    """Verify that articles with None raw_content are handled without errors."""
     articles = [{"title": "No Content", "raw_content": None}]
     prompt = _build_scoring_prompt(articles, [])
 
@@ -109,10 +109,10 @@ def test_build_scoring_prompt_handles_none_content() -> None:
 
 
 def test_parse_scoring_response_valid() -> None:
-    """유효한 JSON 응답이 올바르게 파싱된다.
+    """Verify that a valid JSON response is correctly parsed.
 
-    Mock: 정상 JSON 응답.
-    검증: 점수, 카테고리, 키워드가 정확히 추출됨.
+    Mock: Valid JSON response.
+    Expects: Scores, categories, and keywords are extracted accurately.
     """
     response = _make_gemini_response(
         [
@@ -131,7 +131,7 @@ def test_parse_scoring_response_valid() -> None:
 
 
 def test_parse_scoring_response_malformed_json() -> None:
-    """JSON 파싱 실패 시 모든 기사에 폴백 결과(점수 0.0)를 반환한다."""
+    """Verify fallback results (score 0.0) are returned on JSON parse failure."""
     results = _parse_scoring_response("not valid json {{{", 3)
 
     assert len(results) == 3
@@ -143,7 +143,7 @@ def test_parse_scoring_response_malformed_json() -> None:
 
 
 def test_parse_scoring_response_missing_results_key() -> None:
-    """JSON에 'results' 키가 없으면 폴백 결과를 반환한다."""
+    """Verify fallback results when JSON lacks a 'results' key."""
     results = _parse_scoring_response('{"data": []}', 2)
 
     assert len(results) == 2
@@ -151,7 +151,7 @@ def test_parse_scoring_response_missing_results_key() -> None:
 
 
 def test_parse_scoring_response_missing_article_result() -> None:
-    """일부 기사의 결과가 누락되면 해당 기사만 폴백 처리된다."""
+    """Verify that only missing articles get fallback treatment."""
     response = _make_gemini_response(
         [
             _make_scoring_result(0, 0.9),
@@ -166,7 +166,7 @@ def test_parse_scoring_response_missing_article_result() -> None:
 
 
 def test_parse_scoring_response_invalid_score_range() -> None:
-    """점수가 0.0-1.0 범위를 벗어나면 0.0으로 폴백된다."""
+    """Verify that scores outside the 0.0-1.0 range fall back to 0.0."""
     response = _make_gemini_response(
         [
             _make_scoring_result(0, 1.5),  # over 1.0
@@ -181,7 +181,7 @@ def test_parse_scoring_response_invalid_score_range() -> None:
 
 
 def test_parse_scoring_response_non_numeric_score() -> None:
-    """점수가 숫자가 아닌 경우 0.0으로 폴백된다."""
+    """Verify that non-numeric scores fall back to 0.0."""
     response = json.dumps(
         {
             "results": [
@@ -204,7 +204,7 @@ def test_parse_scoring_response_non_numeric_score() -> None:
 
 
 def test_fallback_result() -> None:
-    """폴백 결과가 0.0 점수와 빈 카테고리·키워드를 포함한다."""
+    """Verify fallback result has score 0.0 and empty categories/keywords."""
     result = _fallback_result(3)
 
     assert result["index"] == 3
@@ -219,10 +219,10 @@ def test_fallback_result() -> None:
 @pytest.mark.asyncio
 @patch("backend.services.scorer.asyncio.sleep", new_callable=AsyncMock)
 async def test_call_gemini_with_retry_success(mock_sleep: AsyncMock) -> None:
-    """첫 번째 시도에서 성공하면 즉시 결과를 반환한다.
+    """Verify immediate result return on first successful attempt.
 
-    Mock: Gemini 응답 성공.
-    검증: 결과 반환, sleep 호출 없음.
+    Mock: Gemini responds successfully.
+    Expects: Result returned, sleep not called.
     """
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -240,10 +240,10 @@ async def test_call_gemini_with_retry_success(mock_sleep: AsyncMock) -> None:
 @pytest.mark.asyncio
 @patch("backend.services.scorer.asyncio.sleep", new_callable=AsyncMock)
 async def test_call_gemini_with_retry_retries_on_error(mock_sleep: AsyncMock) -> None:
-    """API 오류 시 지수 백오프로 재시도하고 성공 시 결과를 반환한다.
+    """Verify exponential backoff retry on API errors with eventual success.
 
-    Mock: 첫 2회 실패, 3회차 성공.
-    검증: 결과 반환, sleep이 1.0s, 2.0s로 2회 호출됨.
+    Mock: First 2 calls fail, 3rd succeeds.
+    Expects: Result returned, sleep called with 1.0s and 2.0s.
     """
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -269,10 +269,10 @@ async def test_call_gemini_with_retry_retries_on_error(mock_sleep: AsyncMock) ->
 @pytest.mark.asyncio
 @patch("backend.services.scorer.asyncio.sleep", new_callable=AsyncMock)
 async def test_call_gemini_with_retry_exhausted(mock_sleep: AsyncMock) -> None:
-    """모든 재시도가 소진되면 마지막 예외를 발생시킨다.
+    """Verify last exception is raised when all retries are exhausted.
 
-    Mock: 3회 모두 실패.
-    검증: RuntimeError 발생, sleep이 2회 호출됨.
+    Mock: All 3 calls fail.
+    Expects: RuntimeError raised, sleep called twice.
     """
     mock_client = MagicMock()
     mock_client.aio.models.generate_content = AsyncMock(
@@ -291,10 +291,10 @@ async def test_call_gemini_with_retry_exhausted(mock_sleep: AsyncMock) -> None:
 @pytest.mark.asyncio
 @patch("backend.services.scorer.create_gemini_client")
 async def test_score_articles_single_batch(mock_create_client: MagicMock) -> None:
-    """5개 기사를 단일 배치로 스코어링한다.
+    """Verify scoring of 5 articles in a single batch.
 
-    Mock: Gemini 응답에 5개 기사 결과 포함.
-    검증: 5개 모두 점수·카테고리·키워드가 할당됨.
+    Mock: Gemini response contains results for 5 articles.
+    Expects: All 5 receive scores, categories, and keywords.
     """
     articles = [_make_article(f"Article {i}") for i in range(5)]
     response_data = _make_gemini_response(
@@ -319,10 +319,10 @@ async def test_score_articles_single_batch(mock_create_client: MagicMock) -> Non
 @pytest.mark.asyncio
 @patch("backend.services.scorer.create_gemini_client")
 async def test_score_articles_multiple_batches(mock_create_client: MagicMock) -> None:
-    """15개 기사가 배치 크기 10으로 2개 배치로 분할된다.
+    """Verify 15 articles are split into 2 batches with batch size 10.
 
-    Mock: 2번의 Gemini 호출, 각각 10개와 5개 결과.
-    검증: 15개 모두 스코어링 완료, Gemini가 2회 호출됨.
+    Mock: 2 Gemini calls returning 10 and 5 results respectively.
+    Expects: All 15 scored, Gemini called twice.
     """
     articles = [_make_article(f"Article {i}") for i in range(15)]
 
@@ -357,10 +357,10 @@ async def test_score_articles_multiple_batches(mock_create_client: MagicMock) ->
 @pytest.mark.asyncio
 @patch("backend.services.scorer.create_gemini_client")
 async def test_score_articles_with_interests(mock_create_client: MagicMock) -> None:
-    """사용자 관심사가 프롬프트에 포함된다.
+    """Verify user interests are included in the scoring prompt.
 
-    Mock: Gemini 응답 성공.
-    검증: 프롬프트에 관심사 키워드와 가중치가 포함됨.
+    Mock: Gemini responds successfully.
+    Expects: Prompt contains interest keywords and weights.
     """
     articles = [_make_article()]
     interests = [_make_interest("AI", 5.0), _make_interest("Python", 3.0)]
@@ -386,10 +386,10 @@ async def test_score_articles_with_interests(mock_create_client: MagicMock) -> N
 @pytest.mark.asyncio
 @patch("backend.services.scorer.create_gemini_client")
 async def test_score_articles_no_interests(mock_create_client: MagicMock) -> None:
-    """관심사가 없을 때도 스코어링이 정상 작동한다.
+    """Verify scoring works correctly without user interests.
 
-    Mock: Gemini 응답 성공.
-    검증: 결과 반환 성공, 프롬프트에 일반 기술 관련성 안내 포함.
+    Mock: Gemini responds successfully.
+    Expects: Results returned, prompt includes general tech relevance guidance.
     """
     articles = [_make_article()]
 
@@ -409,10 +409,10 @@ async def test_score_articles_no_interests(mock_create_client: MagicMock) -> Non
 
 @pytest.mark.asyncio
 async def test_score_articles_empty_articles() -> None:
-    """빈 기사 목록은 Gemini 호출 없이 빈 결과를 반환한다.
+    """Verify empty article list returns empty results without calling Gemini.
 
-    Mock: 없음 (Gemini 호출 자체가 불필요).
-    검증: 빈 리스트 반환.
+    Mock: None (Gemini call not needed).
+    Expects: Empty list returned.
     """
     results = await score_articles([])
 
@@ -422,10 +422,10 @@ async def test_score_articles_empty_articles() -> None:
 @pytest.mark.asyncio
 @patch("backend.services.scorer.create_gemini_client")
 async def test_score_articles_malformed_response(mock_create_client: MagicMock) -> None:
-    """Gemini가 잘못된 JSON을 반환하면 폴백 점수(0.0)를 사용한다.
+    """Verify fallback scores (0.0) are used when Gemini returns invalid JSON.
 
-    Mock: Gemini 응답이 유효하지 않은 JSON.
-    검증: 모든 기사가 0.0 점수와 빈 카테고리·키워드를 가짐.
+    Mock: Gemini response is not valid JSON.
+    Expects: All articles get score 0.0 with empty categories/keywords.
     """
     articles = [_make_article("A"), _make_article("B")]
 
@@ -451,10 +451,10 @@ async def test_score_articles_api_error_retry(
     mock_create_client: MagicMock,
     mock_sleep: AsyncMock,
 ) -> None:
-    """API 오류 시 재시도 후 성공하면 정상 결과를 반환한다.
+    """Verify normal results after successful retry on API error.
 
-    Mock: 첫 호출 실패, 재시도 시 성공.
-    검증: 정상 결과 반환, 재시도 발생 확인.
+    Mock: First call fails, retry succeeds.
+    Expects: Normal results returned, retry confirmed.
     """
     articles = [_make_article()]
 
@@ -483,10 +483,10 @@ async def test_score_articles_all_retries_exhausted(
     mock_create_client: MagicMock,
     mock_sleep: AsyncMock,
 ) -> None:
-    """모든 재시도가 소진되면 해당 배치에 폴백 결과를 사용한다.
+    """Verify fallback results when all retries are exhausted.
 
-    Mock: 3회 모두 실패.
-    검증: 폴백 결과(0.0 점수) 반환, 에러 미전파.
+    Mock: All 3 calls fail.
+    Expects: Fallback results (score 0.0), error not propagated.
     """
     articles = [_make_article()]
 
@@ -505,9 +505,9 @@ async def test_score_articles_all_retries_exhausted(
 
 
 def test_score_articles_api_key_not_logged(caplog: pytest.LogCaptureFixture) -> None:
-    """로그 메시지에 API 키가 노출되지 않는다.
+    """Verify API key is never exposed in log messages.
 
-    검증: scorer 모듈의 모든 로그 메시지에 API 키 문자열이 포함되지 않음.
+    Expects: No log message from the scorer module contains the API key string.
     """
     api_key = "super-secret-api-key-12345"
 

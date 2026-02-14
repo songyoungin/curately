@@ -30,7 +30,7 @@ def _make_entry(
     summary: str | None = "Article content",
     published_parsed: time.struct_time | None = None,
 ) -> dict:
-    """feedparser entry를 모사하는 딕셔너리를 생성한다."""
+    """Create a dict mimicking a feedparser entry."""
     entry: dict = {
         "title": title,
         "link": link,
@@ -46,7 +46,7 @@ def _make_supabase_mock(
     feeds: list[dict] | None = None,
     existing_urls: list[str] | None = None,
 ) -> MagicMock:
-    """Supabase client mock을 생성한다.
+    """Create a Supabase client mock.
 
     Mocks:
         - feeds.select().eq().execute() -> feeds
@@ -107,7 +107,7 @@ RSS_XML = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 def test_parse_published_date_valid() -> None:
-    """유효한 struct_time이 UTC datetime으로 변환된다."""
+    """Verify valid struct_time is converted to UTC datetime."""
     st = time.strptime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S")
     entry = {"published_parsed": st}
     result = _parse_published_date(entry)
@@ -119,12 +119,12 @@ def test_parse_published_date_valid() -> None:
 
 
 def test_parse_published_date_none() -> None:
-    """published_parsed가 없으면 None을 반환한다."""
+    """Verify None is returned when published_parsed is missing."""
     assert _parse_published_date({}) is None
 
 
 def test_parse_published_date_invalid() -> None:
-    """잘못된 값이면 None을 반환한다."""
+    """Verify None is returned for invalid values."""
     entry = {"published_parsed": "not-a-struct-time"}
     assert _parse_published_date(entry) is None
 
@@ -133,7 +133,7 @@ def test_parse_published_date_invalid() -> None:
 
 
 def test_entries_to_articles_maps_fields() -> None:
-    """feedparser 엔트리 필드가 기사 딕셔너리로 올바르게 매핑된다."""
+    """Verify feedparser entry fields are correctly mapped to article dicts."""
     entries = [_make_entry()]
     result = _entries_to_articles(entries, "My Feed")
 
@@ -147,19 +147,19 @@ def test_entries_to_articles_maps_fields() -> None:
 
 
 def test_entries_to_articles_skips_missing_link() -> None:
-    """link가 없는 엔트리는 건너뛴다."""
+    """Verify entries without a link are skipped."""
     entries = [{"title": "No Link"}]
     assert _entries_to_articles(entries, "Feed") == []
 
 
 def test_entries_to_articles_skips_missing_title() -> None:
-    """title이 없는 엔트리는 건너뛴다."""
+    """Verify entries without a title are skipped."""
     entries = [{"link": "https://example.com/x"}]
     assert _entries_to_articles(entries, "Feed") == []
 
 
 def test_entries_to_articles_uses_description_fallback() -> None:
-    """summary가 없으면 description을 사용한다."""
+    """Verify description is used as fallback when summary is absent."""
     entry = _make_entry(summary=None)
     entry.pop("summary", None)
     entry["description"] = "fallback content"
@@ -171,7 +171,7 @@ def test_entries_to_articles_uses_description_fallback() -> None:
 
 
 def test_deduplicate_removes_existing() -> None:
-    """DB에 이미 존재하는 URL의 기사가 제거된다."""
+    """Verify articles with URLs already in the database are removed."""
     client = _make_supabase_mock(existing_urls=["https://example.com/1"])
     articles = [
         {"source_url": "https://example.com/1", "title": "Old"},
@@ -183,7 +183,7 @@ def test_deduplicate_removes_existing() -> None:
 
 
 def test_deduplicate_keeps_all_when_none_exist() -> None:
-    """DB에 없는 기사는 모두 유지된다."""
+    """Verify all articles are kept when none exist in the database."""
     client = _make_supabase_mock(existing_urls=[])
     articles = [
         {"source_url": "https://example.com/1", "title": "A"},
@@ -199,7 +199,7 @@ def test_deduplicate_keeps_all_when_none_exist() -> None:
 @pytest.mark.asyncio
 @patch("backend.services.collector.httpx.AsyncClient")
 async def test_collect_articles_full_flow(mock_async_client_cls: MagicMock) -> None:
-    """전체 수집 흐름: 피드 조회 -> HTTP fetch -> 파싱 -> 중복 제거."""
+    """Verify full collection flow: fetch feeds -> HTTP fetch -> parse -> deduplicate."""
     feeds = [_make_feed(1, "Feed A", "https://feed-a.com/rss")]
     client = _make_supabase_mock(feeds=feeds, existing_urls=[])
 
@@ -226,7 +226,7 @@ async def test_collect_articles_full_flow(mock_async_client_cls: MagicMock) -> N
 async def test_collect_articles_no_active_feeds(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """활성 피드가 없으면 빈 리스트를 반환한다."""
+    """Verify empty list is returned when no active feeds exist."""
     client = _make_supabase_mock(feeds=[])
     result = await collect_articles(client)
     assert result == []
@@ -237,7 +237,7 @@ async def test_collect_articles_no_active_feeds(
 async def test_collect_articles_handles_timeout(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """타임아웃 피드는 건너뛰고 나머지를 계속 처리한다."""
+    """Verify timed-out feeds are skipped while remaining feeds are processed."""
     feeds = [
         _make_feed(1, "Bad Feed", "https://bad.com/rss"),
         _make_feed(2, "Good Feed", "https://good.com/rss"),
@@ -270,7 +270,7 @@ async def test_collect_articles_handles_timeout(
 async def test_collect_articles_handles_http_error(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """HTTP 에러 피드는 건너뛰고 나머지를 계속 처리한다."""
+    """Verify feeds with HTTP errors are skipped while remaining are processed."""
     feeds = [_make_feed(1, "Error Feed", "https://error.com/rss")]
     client = _make_supabase_mock(feeds=feeds, existing_urls=[])
 
@@ -295,7 +295,7 @@ async def test_collect_articles_handles_http_error(
 async def test_collect_articles_deduplicates(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """DB에 이미 존재하는 기사 URL은 결과에서 제외된다."""
+    """Verify articles with URLs already in the database are excluded from results."""
     feeds = [_make_feed(1, "Feed", "https://feed.com/rss")]
     client = _make_supabase_mock(feeds=feeds, existing_urls=["https://example.com/1"])
 
@@ -328,10 +328,10 @@ EMPTY_RSS_XML = """<?xml version="1.0" encoding="UTF-8"?>
 async def test_collect_articles_empty_feed(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """엔트리가 없는 피드에서는 빈 리스트를 반환한다.
+    """Verify empty list is returned when a feed has no entries.
 
-    Mock: httpx 응답 성공, RSS에 item 없음.
-    검증: 빈 리스트 반환, last_fetched_at 갱신.
+    Mock: httpx response succeeds, RSS has no items.
+    Expects: Empty list returned, last_fetched_at updated.
     """
     feeds = [_make_feed(1, "Empty Feed", "https://empty.com/rss")]
     client = _make_supabase_mock(feeds=feeds, existing_urls=[])
@@ -355,10 +355,10 @@ async def test_collect_articles_empty_feed(
 async def test_collect_articles_network_error(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """네트워크 에러(ConnectError) 발생 시 해당 피드를 건너뛰고 계속 진행한다.
+    """Verify ConnectError feed is skipped and remaining feeds are processed.
 
-    Mock: 첫 번째 피드 ConnectError, 두 번째 피드 정상 응답.
-    검증: 실패한 피드 건너뛰고 나머지 기사 수집.
+    Mock: First feed raises ConnectError, second feed responds normally.
+    Expects: Failed feed skipped, remaining articles collected.
     """
     feeds = [
         _make_feed(1, "Bad Feed", "https://bad.com/rss"),
@@ -392,10 +392,10 @@ async def test_collect_articles_network_error(
 async def test_collect_articles_malformed_rss(
     mock_async_client_cls: MagicMock,
 ) -> None:
-    """유효하지 않은 RSS 응답(HTML 등)은 빈 엔트리로 처리된다.
+    """Verify invalid RSS responses (e.g., HTML) are treated as empty entries.
 
-    Mock: httpx 응답 성공, 본문이 HTML (RSS가 아님).
-    검증: 빈 리스트 반환.
+    Mock: httpx response succeeds, body is HTML (not RSS).
+    Expects: Empty list returned.
     """
     feeds = [_make_feed(1, "Malformed Feed", "https://malformed.com/rss")]
     client = _make_supabase_mock(feeds=feeds, existing_urls=[])

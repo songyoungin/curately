@@ -17,13 +17,13 @@ router = APIRouter(prefix="/api/feeds", tags=["feeds"])
 
 
 async def _validate_feed_url(url: str) -> None:
-    """RSS 피드 URL의 유효성을 검증한다.
+    """Validate that a URL points to a valid RSS feed.
 
     Args:
-        url: 검증할 RSS 피드 URL.
+        url: RSS feed URL to validate.
 
     Raises:
-        HTTPException: URL 형식이 잘못되었거나 유효한 RSS 피드가 아닌 경우.
+        HTTPException: If URL format is invalid or not a valid RSS feed.
     """
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
@@ -59,7 +59,7 @@ async def _validate_feed_url(url: str) -> None:
 
 @router.get("", response_model=list[FeedResponse])
 async def list_feeds() -> list[dict[str, Any]]:
-    """등록된 모든 피드 목록을 반환한다."""
+    """Return all registered feeds."""
     supabase = get_supabase_client()
     result = (
         supabase.table("feeds").select("*").order("created_at", desc=True).execute()
@@ -69,10 +69,10 @@ async def list_feeds() -> list[dict[str, Any]]:
 
 @router.post("", response_model=FeedResponse, status_code=status.HTTP_201_CREATED)
 async def create_feed(body: FeedCreate) -> dict[str, Any]:
-    """새로운 RSS 피드를 등록한다.
+    """Register a new RSS feed.
 
     Args:
-        body: 피드 이름과 URL.
+        body: Feed name and URL.
     """
     await _validate_feed_url(body.url)
 
@@ -93,10 +93,10 @@ async def create_feed(body: FeedCreate) -> dict[str, Any]:
 
 @router.delete("/{feed_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_feed(feed_id: int) -> None:
-    """피드를 삭제한다.
+    """Delete a feed.
 
     Args:
-        feed_id: 삭제할 피드의 ID.
+        feed_id: ID of the feed to delete.
     """
     supabase = get_supabase_client()
 
@@ -112,11 +112,11 @@ async def delete_feed(feed_id: int) -> None:
 
 @router.patch("/{feed_id}", response_model=FeedResponse)
 async def update_feed(feed_id: int, body: FeedUpdate) -> dict[str, Any]:
-    """피드의 활성 상태를 변경한다.
+    """Update a feed's active status.
 
     Args:
-        feed_id: 변경할 피드의 ID.
-        body: 변경할 활성 상태.
+        feed_id: ID of the feed to update.
+        body: New active status.
     """
     supabase = get_supabase_client()
 
