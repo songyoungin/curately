@@ -30,6 +30,9 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Serena
+.serena/
+
 # OS files
 .DS_Store
 Thumbs.db
