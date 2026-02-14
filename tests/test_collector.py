@@ -313,3 +313,102 @@ async def test_collect_articles_deduplicates(
 
     assert len(result) == 1
     assert result[0]["source_url"] == "https://example.com/2"
+
+
+EMPTY_RSS_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Empty Feed</title>
+  </channel>
+</rss>"""
+
+
+@pytest.mark.asyncio
+@patch("backend.services.collector.httpx.AsyncClient")
+async def test_collect_articles_empty_feed(
+    mock_async_client_cls: MagicMock,
+) -> None:
+    """엔트리가 없는 피드에서는 빈 리스트를 반환한다.
+
+    Mock: httpx 응답 성공, RSS에 item 없음.
+    검증: 빈 리스트 반환, last_fetched_at 갱신.
+    """
+    feeds = [_make_feed(1, "Empty Feed", "https://empty.com/rss")]
+    client = _make_supabase_mock(feeds=feeds, existing_urls=[])
+
+    mock_response = MagicMock()
+    mock_response.text = EMPTY_RSS_XML
+    mock_response.raise_for_status = MagicMock()
+
+    mock_http = AsyncMock()
+    mock_http.get.return_value = mock_response
+    mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+    mock_http.__aexit__ = AsyncMock(return_value=False)
+    mock_async_client_cls.return_value = mock_http
+
+    result = await collect_articles(client)
+    assert result == []
+
+
+@pytest.mark.asyncio
+@patch("backend.services.collector.httpx.AsyncClient")
+async def test_collect_articles_network_error(
+    mock_async_client_cls: MagicMock,
+) -> None:
+    """네트워크 에러(ConnectError) 발생 시 해당 피드를 건너뛰고 계속 진행한다.
+
+    Mock: 첫 번째 피드 ConnectError, 두 번째 피드 정상 응답.
+    검증: 실패한 피드 건너뛰고 나머지 기사 수집.
+    """
+    feeds = [
+        _make_feed(1, "Bad Feed", "https://bad.com/rss"),
+        _make_feed(2, "Good Feed", "https://good.com/rss"),
+    ]
+    client = _make_supabase_mock(feeds=feeds, existing_urls=[])
+
+    mock_good_response = MagicMock()
+    mock_good_response.text = RSS_XML
+    mock_good_response.raise_for_status = MagicMock()
+
+    async def side_effect(url: str, **kwargs: object) -> MagicMock:
+        if "bad.com" in url:
+            raise httpx.ConnectError("Connection refused")
+        return mock_good_response
+
+    mock_http = AsyncMock()
+    mock_http.get.side_effect = side_effect
+    mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+    mock_http.__aexit__ = AsyncMock(return_value=False)
+    mock_async_client_cls.return_value = mock_http
+
+    result = await collect_articles(client)
+
+    assert len(result) == 2
+    assert all(a["source_feed"] == "Good Feed" for a in result)
+
+
+@pytest.mark.asyncio
+@patch("backend.services.collector.httpx.AsyncClient")
+async def test_collect_articles_malformed_rss(
+    mock_async_client_cls: MagicMock,
+) -> None:
+    """유효하지 않은 RSS 응답(HTML 등)은 빈 엔트리로 처리된다.
+
+    Mock: httpx 응답 성공, 본문이 HTML (RSS가 아님).
+    검증: 빈 리스트 반환.
+    """
+    feeds = [_make_feed(1, "Malformed Feed", "https://malformed.com/rss")]
+    client = _make_supabase_mock(feeds=feeds, existing_urls=[])
+
+    mock_response = MagicMock()
+    mock_response.text = "<html><body>Not a feed</body></html>"
+    mock_response.raise_for_status = MagicMock()
+
+    mock_http = AsyncMock()
+    mock_http.get.return_value = mock_response
+    mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+    mock_http.__aexit__ = AsyncMock(return_value=False)
+    mock_async_client_cls.return_value = mock_http
+
+    result = await collect_articles(client)
+    assert result == []
