@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Curately is an AI-curated personal tech newsletter. It collects articles from RSS feeds daily, scores them against user interests using Gemini 2.5 Flash, generates Korean summaries, and serves a web UI for browsing, liking, bookmarking, and tracking interest trends over time.
 
-**Status**: Early stage — design document complete, implementation not yet started.
+**Status**: Phase 2 complete — RSS collection pipeline and feed CRUD implemented.
 
 ## Tech Stack
 
@@ -39,8 +39,8 @@ uv run pytest                                  # Run all tests
 uv run pytest tests/test_collector.py          # Run a single test file
 uv run pytest tests/test_collector.py -k test_name  # Run a single test
 
-# Linting (pre-commit hooks)
-pre-commit run --all-files                     # Run all linters
+# Linting (pre-commit hooks — must use uv run)
+uv run pre-commit run --all-files              # Run all linters
 
 # Dependencies
 uv add <package>                               # Add production dependency
@@ -91,6 +91,69 @@ RSS Feeds → **Collector** (feedparser, dedup by source_url) → **Scorer** (Ge
 - `config.yaml` — RSS feed list, schedule settings, relevance thresholds
 - `.env` — Secrets: `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 
+## Pre-commit Hooks
+
+Uses `ruff` for both linting and formatting (no `black`):
+- **ruff** — lint + auto-fix (`--fix --exit-non-zero-on-fix`)
+- **ruff-format** — code formatting (replaces black)
+- **mypy** — static type checking (`--ignore-missing-imports`)
+- Standard hooks: trailing-whitespace, end-of-file-fixer, check-yaml/json/toml, debug-statements, etc.
+
+## Coding Patterns
+
+### Supabase Client Type Handling
+
+Supabase `response.data` returns `list[JSON]` which mypy cannot index with `str`. Always use `cast()`:
+
+```python
+from typing import Any, cast
+
+result = client.table("feeds").select("*").execute()
+rows = cast(list[dict[str, Any]], result.data)       # for list returns
+row = cast(dict[str, Any], result.data[0])            # for single row
+```
+
+### Branch Naming
+
+Follow the convention from `docs/plans/implementation-phases.md`:
+
+```
+feature/phase-01-foundation
+feature/phase-02-rss-collection
+feature/phase-03-ai-pipeline
+...
+```
+
+For non-phase work: `chore/`, `fix/`, `docs/`, `refactor/` prefixes.
+
+## CI Pipeline
+
+GitHub Actions runs 3 jobs on every PR:
+- **lint** — `ruff check`
+- **test** — `pytest`
+- **type-check** — `mypy backend/ --ignore-missing-imports`
+
+All 3 must pass before merging.
+
+## Implementation Progress
+
+See `docs/plans/implementation-phases.md` for the full phase plan.
+
+| Phase | Status |
+|-------|--------|
+| Phase 1: Project Foundation | Done |
+| Phase 2: RSS Collection Pipeline | Done |
+| Phase 3: AI Pipeline (Scoring & Summarization) | Not started |
+| Phase 4: Daily Pipeline & Newsletter API | Not started |
+| Phase 5: User Interactions & Feedback Loop | Not started |
+| Phase 6: Rewind Weekly Analysis | Not started |
+| Phase 7: Frontend Foundation | Not started |
+| Phase 8: Today Page & Article Interactions | Not started |
+| Phase 9: Archive, Bookmarks & Settings | Not started |
+| Phase 10: Rewind UI & Polish | Not started |
+| Phase 11: Integration Testing & Final QA | Not started |
+
 ## Reference
 
 - Full design document: `docs/plans/2026-02-13-tech-newsletter-design.md` (DB schema, API endpoints, component hierarchy, pipeline details)
+- Implementation phases: `docs/plans/implementation-phases.md` (task breakdown, team roles, acceptance criteria)
