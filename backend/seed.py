@@ -1,6 +1,7 @@
 """MVP default user seeding logic."""
 
 import logging
+from typing import Any
 
 from supabase import Client
 
@@ -21,7 +22,8 @@ async def seed_default_user(client: Client) -> None:
     )
 
     if result.data:
-        logger.info("Default user already exists (id=%s)", result.data[0]["id"])
+        first_row: dict[str, Any] = result.data[0]  # type: ignore[assignment]
+        logger.info("Default user already exists (id=%s)", first_row["id"])
         return
 
     client.table("users").insert(
