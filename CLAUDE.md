@@ -128,6 +128,12 @@ feature/phase-03-ai-pipeline
 
 For non-phase work: `chore/`, `fix/`, `docs/`, `refactor/` prefixes.
 
+## Pull Request Workflow
+
+1. **Always attach labels** when creating a PR (e.g., `feature`, `fix`, `refactor`, `docs`, `chore`). Create the label first if it doesn't exist.
+2. **Watch CI checks** after PR creation — wait for all checks to complete.
+3. **Merge immediately** once all CI checks pass. Use `gh pr merge --merge --delete-branch`.
+
 ## CI Pipeline
 
 GitHub Actions runs 3 jobs on every PR:
