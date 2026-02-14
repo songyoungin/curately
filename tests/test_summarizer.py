@@ -43,14 +43,14 @@ _DETAILED_SUMMARY_RESPONSE = json.dumps(
 
 
 def _make_gemini_response(text: str) -> MagicMock:
-    """Gemini API 응답 객체를 모사하는 MagicMock을 생성한다."""
+    """Create a MagicMock mimicking a Gemini API response object."""
     response = MagicMock()
     response.text = text
     return response
 
 
 def _make_settings_mock() -> MagicMock:
-    """Settings mock을 생성한다. gemini.model과 gemini_api_key를 포함."""
+    """Create a Settings mock with gemini.model and gemini_api_key."""
     settings = MagicMock()
     settings.gemini.model = "gemini-2.5-flash"
     settings.gemini_api_key = "test-api-key"
@@ -61,22 +61,22 @@ def _make_settings_mock() -> MagicMock:
 
 
 def test_truncate_content_short() -> None:
-    """짧은 콘텐츠는 그대로 반환된다."""
+    """Verify short content is returned unchanged."""
     assert _truncate_content("short text") == "short text"
 
 
 def test_truncate_content_none() -> None:
-    """None 입력은 빈 문자열로 반환된다."""
+    """Verify None input returns an empty string."""
     assert _truncate_content(None) == ""
 
 
 def test_truncate_content_empty() -> None:
-    """빈 문자열은 그대로 반환된다."""
+    """Verify empty string is returned unchanged."""
     assert _truncate_content("") == ""
 
 
 def test_truncate_content_long() -> None:
-    """최대 길이를 초과하는 콘텐츠는 잘리고 '...'이 추가된다."""
+    """Verify content exceeding max length is truncated with '...' appended."""
     long_text = "x" * 20_000
     result = _truncate_content(long_text)
     assert len(result) == 15_003  # 15000 + "..."
@@ -87,7 +87,7 @@ def test_truncate_content_long() -> None:
 
 
 def test_parse_detailed_summary_valid_json() -> None:
-    """유효한 JSON 응답이 DetailedSummary로 올바르게 파싱된다."""
+    """Verify valid JSON response is correctly parsed into DetailedSummary."""
     result = _parse_detailed_summary(_DETAILED_SUMMARY_RESPONSE)
     assert (
         result["background"]
@@ -99,9 +99,9 @@ def test_parse_detailed_summary_valid_json() -> None:
 
 
 def test_parse_detailed_summary_malformed_json() -> None:
-    """잘못된 JSON 응답은 폴백으로 처리된다.
+    """Verify malformed JSON falls back gracefully.
 
-    검증: background에 원본 텍스트, takeaways/keywords는 빈 리스트.
+    Expects: background contains raw text, takeaways/keywords are empty lists.
     """
     result = _parse_detailed_summary("This is not valid JSON at all")
     assert result["background"] == "This is not valid JSON at all"
@@ -110,9 +110,9 @@ def test_parse_detailed_summary_malformed_json() -> None:
 
 
 def test_parse_detailed_summary_missing_fields() -> None:
-    """일부 필드가 누락된 JSON도 기본값으로 처리된다.
+    """Verify JSON with missing fields uses default values.
 
-    검증: 누락된 필드는 빈 문자열/리스트로 대체.
+    Expects: Missing fields are replaced with empty string/list.
     """
     partial = json.dumps({"background": "Some background"})
     result = _parse_detailed_summary(partial)
@@ -122,9 +122,9 @@ def test_parse_detailed_summary_missing_fields() -> None:
 
 
 def test_parse_detailed_summary_wrong_types() -> None:
-    """필드 타입이 잘못된 JSON도 안전하게 처리된다.
+    """Verify JSON with wrong field types is handled safely.
 
-    검증: 타입이 맞지 않는 값은 str 변환 또는 빈 리스트로 대체.
+    Expects: Wrong types are converted to str or replaced with empty list.
     """
     wrong_types = json.dumps(
         {"background": 123, "takeaways": "not a list", "keywords": None}
@@ -139,7 +139,7 @@ def test_parse_detailed_summary_wrong_types() -> None:
 
 
 def test_fallback_detailed_summary() -> None:
-    """폴백 함수가 원본 텍스트를 background에 넣어 반환한다."""
+    """Verify fallback returns raw text as background."""
     result = _fallback_detailed_summary("  some raw text  ")
     assert result["background"] == "some raw text"
     assert result["takeaways"] == []
@@ -147,7 +147,7 @@ def test_fallback_detailed_summary() -> None:
 
 
 def test_fallback_detailed_summary_empty() -> None:
-    """빈 텍스트의 폴백은 빈 background를 반환한다."""
+    """Verify fallback with empty text returns empty background."""
     result = _fallback_detailed_summary("")
     assert result["background"] == ""
 
@@ -162,10 +162,10 @@ async def test_generate_basic_summary_success(
     mock_get_client: MagicMock,
     mock_get_settings: MagicMock,
 ) -> None:
-    """Gemini API가 정상 응답을 반환하면 한국어 요약 텍스트를 반환한다.
+    """Verify Korean summary text is returned on successful Gemini response.
 
-    Mock: Gemini generate_content → 한국어 요약 텍스트.
-    검증: 반환된 요약이 strip된 응답 텍스트와 일치.
+    Mock: Gemini generate_content returns Korean summary text.
+    Expects: Returned summary matches the stripped response text.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -187,10 +187,10 @@ async def test_generate_basic_summary_empty_content(
     mock_get_client: MagicMock,
     mock_get_settings: MagicMock,
 ) -> None:
-    """콘텐츠가 None이어도 정상적으로 요약을 생성한다.
+    """Verify summary is generated normally even with None content.
 
-    Mock: Gemini generate_content → 한국어 요약 텍스트.
-    검증: content=None이어도 프롬프트에 '(no content)' 대체 후 호출 성공.
+    Mock: Gemini generate_content returns Korean summary text.
+    Expects: Prompt uses '(no content)' placeholder, call succeeds.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -215,10 +215,10 @@ async def test_generate_basic_summary_api_error_retry(
     mock_get_settings: MagicMock,
     mock_sleep: MagicMock,
 ) -> None:
-    """API 에러 발생 시 재시도 후 성공하면 결과를 반환한다.
+    """Verify result is returned after successful retry on API error.
 
-    Mock: 첫 번째 호출 RuntimeError, 두 번째 호출 성공.
-    검증: 2회 호출, sleep 1회, 최종 결과 반환.
+    Mock: First call raises RuntimeError, second call succeeds.
+    Expects: 2 calls, 1 sleep, final result returned.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -244,10 +244,10 @@ async def test_generate_basic_summary_all_retries_fail(
     mock_get_settings: MagicMock,
     mock_sleep: MagicMock,
 ) -> None:
-    """모든 재시도가 실패하면 마지막 예외가 발생한다.
+    """Verify last exception is raised when all retries fail.
 
-    Mock: 3회 모두 RuntimeError.
-    검증: RuntimeError 발생, 3회 호출, sleep 2회.
+    Mock: All 3 calls raise RuntimeError.
+    Expects: RuntimeError raised, 3 calls, 2 sleeps.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -271,10 +271,10 @@ async def test_generate_detailed_summary_success(
     mock_get_client: MagicMock,
     mock_get_settings: MagicMock,
 ) -> None:
-    """정상 JSON 응답이 DetailedSummary 구조로 파싱된다.
+    """Verify valid JSON response is parsed into DetailedSummary structure.
 
-    Mock: Gemini generate_content → JSON 문자열 (background, takeaways, keywords).
-    검증: 반환값이 DetailedSummary 구조이고 각 필드가 올바름.
+    Mock: Gemini generate_content returns JSON string (background, takeaways, keywords).
+    Expects: Return value is a DetailedSummary dict with correct fields.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -300,10 +300,10 @@ async def test_generate_detailed_summary_malformed_response(
     mock_get_client: MagicMock,
     mock_get_settings: MagicMock,
 ) -> None:
-    """Gemini가 잘못된 JSON을 반환하면 폴백으로 처리한다.
+    """Verify fallback handling when Gemini returns invalid JSON.
 
-    Mock: Gemini generate_content → 유효하지 않은 JSON 텍스트.
-    검증: background에 원본 텍스트, takeaways/keywords 빈 리스트.
+    Mock: Gemini generate_content returns non-JSON text.
+    Expects: background contains raw text, takeaways/keywords are empty lists.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -328,10 +328,10 @@ async def test_generate_detailed_summary_api_error_retry(
     mock_get_settings: MagicMock,
     mock_sleep: MagicMock,
 ) -> None:
-    """상세 요약 생성에서도 API 에러 시 재시도가 동작한다.
+    """Verify retry works for detailed summary generation on API error.
 
-    Mock: 첫 번째 호출 RuntimeError, 두 번째 호출 정상 JSON.
-    검증: 2회 호출, 재시도 후 정상 결과 반환.
+    Mock: First call raises RuntimeError, second returns valid JSON.
+    Expects: 2 calls, normal result returned after retry.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -360,10 +360,10 @@ async def test_summarizer_api_key_not_logged(
     mock_sleep: MagicMock,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """API 에러 로깅 시 API 키가 로그에 노출되지 않는다.
+    """Verify API key is never exposed in log messages during error logging.
 
-    Mock: Gemini API 호출 3회 모두 실패 (RuntimeError).
-    검증: 로그 메시지에 API 키 문자열이 포함되지 않음.
+    Mock: Gemini API call fails 3 times (RuntimeError).
+    Expects: No log message contains the API key string.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()
@@ -388,10 +388,10 @@ async def test_generate_basic_summary_long_content(
     mock_get_client: MagicMock,
     mock_get_settings: MagicMock,
 ) -> None:
-    """매우 긴 콘텐츠는 잘려서 프롬프트에 포함된다.
+    """Verify very long content is truncated before being sent in the prompt.
 
-    Mock: Gemini generate_content 정상 응답.
-    검증: 15,000자 초과 콘텐츠가 잘려서 프롬프트에 전달됨.
+    Mock: Gemini generate_content responds normally.
+    Expects: Content exceeding 15,000 chars is truncated in the prompt.
     """
     mock_get_settings.return_value = _make_settings_mock()
     mock_client = MagicMock()

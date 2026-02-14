@@ -24,13 +24,13 @@ _MAX_CONTENT_LENGTH = 500
 
 
 def create_gemini_client(settings: Settings | None = None) -> genai.Client:
-    """설정으로부터 Gemini 클라이언트를 생성한다.
+    """Create a Gemini client from application settings.
 
     Args:
-        settings: 애플리케이션 설정. None이면 기본 설정 사용.
+        settings: Application settings. Uses defaults if None.
 
     Returns:
-        초기화된 Gemini 클라이언트.
+        Initialized Gemini client.
     """
     if settings is None:
         settings = get_settings()
@@ -41,14 +41,14 @@ def _build_scoring_prompt(
     articles: list[dict[str, Any]],
     interests: list[dict[str, Any]],
 ) -> str:
-    """배치 기사 스코어링을 위한 프롬프트를 구성한다.
+    """Build a prompt for batch article relevance scoring.
 
     Args:
-        articles: title과 raw_content를 포함하는 기사 딕셔너리 목록.
-        interests: keyword와 weight를 포함하는 관심사 딕셔너리 목록.
+        articles: List of article dicts containing title and raw_content.
+        interests: List of interest dicts containing keyword and weight.
 
     Returns:
-        Gemini에 전달할 포맷된 프롬프트 문자열.
+        Formatted prompt string to send to Gemini.
     """
     if interests:
         interest_lines = [
@@ -113,13 +113,13 @@ IMPORTANT:
 
 
 def _fallback_result(index: int) -> dict[str, Any]:
-    """파싱 실패 시 사용할 기본 스코어링 결과를 반환한다.
+    """Return a default scoring result for when parsing fails.
 
     Args:
-        index: 배치 내 기사 인덱스.
+        index: Article index within the batch.
 
     Returns:
-        점수 0.0, 빈 카테고리·키워드를 가진 기본 결과.
+        Default result with score 0.0 and empty categories/keywords.
     """
     return {
         "index": index,
@@ -133,14 +133,14 @@ def _parse_scoring_response(
     response_text: str,
     batch_size: int,
 ) -> list[dict[str, Any]]:
-    """Gemini 스코어링 응답 JSON을 파싱한다.
+    """Parse the Gemini scoring response JSON.
 
     Args:
-        response_text: Gemini에서 반환된 JSON 텍스트.
-        batch_size: 예상 결과 개수.
+        response_text: JSON text returned from Gemini.
+        batch_size: Expected number of results.
 
     Returns:
-        score, categories, keywords를 포함하는 스코어링 결과 목록.
+        List of scoring results containing score, categories, and keywords.
     """
     try:
         data = json.loads(response_text)
@@ -189,18 +189,18 @@ async def _call_gemini_with_retry(
     model: str,
     prompt: str,
 ) -> str:
-    """Gemini API를 재시도와 지수 백오프로 호출한다.
+    """Call the Gemini API with retry and exponential backoff.
 
     Args:
-        client: Google GenAI 클라이언트.
-        model: Gemini 모델명.
-        prompt: 프롬프트 텍스트.
+        client: Google GenAI client.
+        model: Gemini model name.
+        prompt: Prompt text.
 
     Returns:
-        Gemini 응답 텍스트.
+        Gemini response text.
 
     Raises:
-        Exception: 모든 재시도가 소진된 경우.
+        Exception: When all retries are exhausted.
     """
     last_error: Exception | None = None
 
@@ -241,19 +241,19 @@ async def score_articles(
     interests: list[dict[str, Any]] | None = None,
     settings: Settings | None = None,
 ) -> list[dict[str, Any]]:
-    """사용자 관심사에 대한 기사 관련성을 Gemini로 스코어링한다.
+    """Score article relevance against user interests using Gemini.
 
-    기사를 배치 단위로 나누어 Gemini에 스코어링을 요청하고,
-    각 기사별 관련성 점수·카테고리·키워드를 반환한다.
+    Splits articles into batches, sends each to Gemini for scoring,
+    and returns relevance scores, categories, and keywords per article.
 
     Args:
-        articles: title, raw_content를 포함하는 기사 딕셔너리 목록.
-        interests: keyword와 weight를 포함하는 관심사 목록. None이면 빈 목록으로 처리.
-        settings: 애플리케이션 설정. None이면 기본 설정 사용.
+        articles: List of article dicts containing title and raw_content.
+        interests: List of interest dicts with keyword and weight. Defaults to empty.
+        settings: Application settings. Uses defaults if None.
 
     Returns:
-        기사별 스코어링 결과 딕셔너리 목록. 각 항목은
-        relevance_score(0.0-1.0), categories(list[str]), keywords(list[str])를 포함.
+        List of scoring result dicts per article, each containing
+        relevance_score (0.0-1.0), categories (list[str]), and keywords (list[str]).
     """
     if not articles:
         return []

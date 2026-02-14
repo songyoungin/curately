@@ -61,19 +61,19 @@ Output ONLY the JSON object, nothing else."""
 
 
 def _get_client() -> genai.Client:
-    """Gemini API 클라이언트를 생성한다."""
+    """Create a Gemini API client."""
     settings = get_settings()
     return genai.Client(api_key=settings.gemini_api_key)
 
 
 def _truncate_content(content: str | None) -> str:
-    """콘텐츠를 최대 길이로 자른다.
+    """Truncate content to the maximum allowed length.
 
     Args:
-        content: 원본 텍스트. None이면 빈 문자열 반환.
+        content: Original text. Returns empty string if None.
 
     Returns:
-        최대 길이 이내로 잘린 텍스트.
+        Text truncated to within the maximum length.
     """
     if not content:
         return ""
@@ -88,19 +88,19 @@ async def _call_gemini_with_retry(
     contents: str,
     config: types.GenerateContentConfig | None = None,
 ) -> str:
-    """Gemini API를 지수 백오프 재시도로 호출한다.
+    """Call the Gemini API with exponential backoff retry.
 
     Args:
-        client: Gemini API 클라이언트.
-        model: 사용할 모델 이름.
-        contents: 프롬프트 텍스트.
-        config: 생성 설정 (JSON 응답 등).
+        client: Gemini API client.
+        model: Model name to use.
+        contents: Prompt text.
+        config: Generation config (e.g., JSON response mode).
 
     Returns:
-        Gemini 응답 텍스트.
+        Gemini response text.
 
     Raises:
-        Exception: 모든 재시도 실패 시 마지막 예외.
+        Exception: Last exception when all retries are exhausted.
     """
     last_exception: Exception | None = None
     for attempt in range(_MAX_RETRIES):
@@ -133,14 +133,14 @@ async def _call_gemini_with_retry(
 
 
 async def generate_basic_summary(title: str, content: str | None) -> str:
-    """기사의 기본 요약(한국어 2~3문장)을 생성한다.
+    """Generate a basic Korean summary (2-3 sentences) for an article.
 
     Args:
-        title: 기사 제목.
-        content: 기사 본문 또는 설명.
+        title: Article title.
+        content: Article body or description.
 
     Returns:
-        한국어 요약 텍스트.
+        Korean summary text.
     """
     settings = get_settings()
     client = _get_client()
@@ -159,14 +159,14 @@ async def generate_basic_summary(title: str, content: str | None) -> str:
 
 
 async def generate_detailed_summary(title: str, content: str | None) -> DetailedSummary:
-    """기사의 상세 분석(배경, 핵심 포인트, 키워드)을 생성한다.
+    """Generate a detailed analysis (background, key takeaways, keywords) for an article.
 
     Args:
-        title: 기사 제목.
-        content: 기사 본문 또는 설명.
+        title: Article title.
+        content: Article body or description.
 
     Returns:
-        background, takeaways, keywords를 포함한 딕셔너리.
+        Dict containing background, takeaways, and keywords.
     """
     settings = get_settings()
     client = _get_client()
@@ -189,13 +189,13 @@ async def generate_detailed_summary(title: str, content: str | None) -> Detailed
 
 
 def _parse_detailed_summary(text: str) -> DetailedSummary:
-    """Gemini 응답 텍스트를 DetailedSummary로 파싱한다.
+    """Parse Gemini response text into a DetailedSummary.
 
     Args:
-        text: Gemini가 반환한 JSON 문자열.
+        text: JSON string returned by Gemini.
 
     Returns:
-        파싱된 DetailedSummary. 파싱 실패 시 기본값 반환.
+        Parsed DetailedSummary. Returns fallback values on parse failure.
     """
     try:
         data: dict[str, Any] = json.loads(text)
@@ -222,7 +222,7 @@ def _parse_detailed_summary(text: str) -> DetailedSummary:
 
 
 def _fallback_detailed_summary(text: str) -> DetailedSummary:
-    """JSON 파싱 실패 시 원본 텍스트를 background에 넣어 반환한다."""
+    """Return a fallback summary with the raw text as background."""
     return DetailedSummary(
         background=text.strip() if text else "",
         takeaways=[],
