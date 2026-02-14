@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **OVERRIDE RULE**: When this project-level CLAUDE.md conflicts with the global `~/.claude/CLAUDE.md`, **this file takes precedence**. This applies to all rules including language, commit conventions, coding style, and tooling. Subagents and teammates MUST also follow this project-level file.
+
 ## Language
 
 - **All code artifacts in English**: commit messages, code comments, docstrings, variable names, documentation
