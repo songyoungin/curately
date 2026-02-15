@@ -117,10 +117,7 @@ def _stage_load_interests(client: Client) -> list[dict[str, Any]]:
     logger.info("Stage 2: Loading user interests")
     try:
         user_result = (
-            client.table("users")
-            .select("id")
-            .eq("email", DEFAULT_USER_EMAIL)
-            .execute()
+            client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
         )
         users = cast(list[dict[str, Any]], user_result.data)
         if not users:
@@ -195,9 +192,7 @@ def _stage_filter(
     threshold = settings.pipeline.relevance_threshold
     max_articles = settings.pipeline.max_articles_per_newsletter
 
-    logger.info(
-        "Stage 4: Filtering (threshold=%.2f, max=%d)", threshold, max_articles
-    )
+    logger.info("Stage 4: Filtering (threshold=%.2f, max=%d)", threshold, max_articles)
 
     above_threshold = [
         a for a in articles if a.get("relevance_score", 0.0) >= threshold

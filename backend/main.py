@@ -7,7 +7,15 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.routers import articles, auth, feeds, interests, newsletters, pipeline, rewind
+from backend.routers import (
+    articles,
+    auth,
+    feeds,
+    interests,
+    newsletters,
+    pipeline,
+    rewind,
+)
 from backend.scheduler import init_scheduler, shutdown_scheduler
 from backend.seed import seed_default_user
 from backend.supabase_client import get_supabase_client

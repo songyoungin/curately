@@ -138,7 +138,7 @@ async def test_run_daily_pipeline_full_flow(
     ]
 
     # Setup summarizer
-    mock_summarize.return_value = "Test summary in Korean."  # noqa: korean-ok
+    mock_summarize.return_value = "Test summary text."
 
     result = await run_daily_pipeline()
 
@@ -244,9 +244,7 @@ async def test_pipeline_limits_to_max_articles(
     mock_collect.return_value = articles
 
     # All articles score above threshold (0.4 to 0.89)
-    mock_score.return_value = [
-        _make_score_result(i, 0.4 + i * 0.02) for i in range(25)
-    ]
+    mock_score.return_value = [_make_score_result(i, 0.4 + i * 0.02) for i in range(25)]
 
     mock_summarize.return_value = "Summary text."
 
