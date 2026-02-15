@@ -84,7 +84,9 @@ def test_get_article_detail(mock_get_client: MagicMock) -> None:
     )
 
     mock_client = MagicMock()
-    mock_client.table = _make_table_side_effect(articles_mock, users_mock, interactions_mock)
+    mock_client.table = _make_table_side_effect(
+        articles_mock, users_mock, interactions_mock
+    )
     mock_get_client.return_value = mock_client
 
     response = client.get("/api/articles/1")
@@ -154,7 +156,9 @@ def test_get_article_with_interactions(mock_get_client: MagicMock) -> None:
     )
 
     mock_client = MagicMock()
-    mock_client.table = _make_table_side_effect(articles_mock, users_mock, interactions_mock)
+    mock_client.table = _make_table_side_effect(
+        articles_mock, users_mock, interactions_mock
+    )
     mock_get_client.return_value = mock_client
 
     response = client.get("/api/articles/1")

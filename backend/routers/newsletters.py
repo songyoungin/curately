@@ -7,7 +7,11 @@ from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from backend.schemas.articles import ArticleListItem, NewsletterListItem, NewsletterResponse
+from backend.schemas.articles import (
+    ArticleListItem,
+    NewsletterListItem,
+    NewsletterResponse,
+)
 from backend.seed import DEFAULT_USER_EMAIL
 from backend.supabase_client import get_supabase_client
 
@@ -25,7 +29,9 @@ def _get_default_user_id(client: Any) -> int | None:
     Returns:
         The default user's ID, or None if the user does not exist.
     """
-    result = client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
+    result = (
+        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
+    )
     if result.data:
         return cast(dict[str, Any], result.data[0])["id"]
     return None
@@ -58,7 +64,9 @@ def _enrich_with_interactions(
     interaction_rows = cast(list[dict[str, Any]], interactions.data)
 
     liked_ids = {r["article_id"] for r in interaction_rows if r["type"] == "like"}
-    bookmarked_ids = {r["article_id"] for r in interaction_rows if r["type"] == "bookmark"}
+    bookmarked_ids = {
+        r["article_id"] for r in interaction_rows if r["type"] == "bookmark"
+    }
 
     for article in articles:
         article["is_liked"] = article["id"] in liked_ids

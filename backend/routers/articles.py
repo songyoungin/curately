@@ -23,7 +23,9 @@ def _get_default_user_id(client: Any) -> int | None:
     Returns:
         The default user's ID, or None if the user does not exist.
     """
-    result = client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
+    result = (
+        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
+    )
     if result.data:
         return cast(dict[str, Any], result.data[0])["id"]
     return None
