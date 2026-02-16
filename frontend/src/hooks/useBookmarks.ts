@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import type { Article } from '../types';
 import { articlesApi } from '../api/client';
@@ -15,6 +15,7 @@ export function useBookmarks(): UseBookmarksReturn {
   const [bookmarks, setBookmarks] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const bookmarksRef = useRef<Article[]>([]);
 
   const fetchBookmarks = useCallback(async () => {
     setLoading(true);
@@ -22,6 +23,7 @@ export function useBookmarks(): UseBookmarksReturn {
     try {
       const response = await articlesApi.getBookmarked();
       setBookmarks(response.data);
+      bookmarksRef.current = response.data;
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { detail?: string } } })?.response?.data
@@ -38,16 +40,15 @@ export function useBookmarks(): UseBookmarksReturn {
   }, [fetchBookmarks]);
 
   const toggleBookmark = useCallback((articleId: number) => {
-    setBookmarks((prev) => {
-      const snapshot = prev;
-      // Optimistically remove the article from bookmarks
-      const updated = prev.filter((a) => a.id !== articleId);
+    const snapshot = bookmarksRef.current;
+    // Optimistically remove the article from bookmarks
+    const updated = snapshot.filter((a) => a.id !== articleId);
+    bookmarksRef.current = updated;
+    setBookmarks(updated);
 
-      articlesApi.toggleBookmark(articleId).catch(() => {
-        setBookmarks(snapshot);
-      });
-
-      return updated;
+    articlesApi.toggleBookmark(articleId).catch(() => {
+      bookmarksRef.current = snapshot;
+      setBookmarks(snapshot);
     });
   }, []);
 

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import {
   mockArticles,
   mockEditions,
@@ -148,7 +148,8 @@ export const handlers = [
   }),
 
   // POST /api/rewind/generate
-  http.post('/api/rewind/generate', () => {
+  http.post('/api/rewind/generate', async () => {
+    await delay(300);
     return HttpResponse.json(mockRewindReports[0], { status: 201 });
   }),
 
