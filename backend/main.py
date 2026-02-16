@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.routers import articles, auth, feeds, interests, newsletters, rewind
+from backend.scheduler import start_scheduler, stop_scheduler
 from backend.seed import seed_default_user
 from backend.supabase_client import get_supabase_client
 
@@ -22,7 +23,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await seed_default_user(client)
     except Exception:
         logger.warning("Default user seeding skipped (DB not available)")
-    yield
+
+    start_scheduler()
+    try:
+        yield
+    finally:
+        stop_scheduler()
 
 
 def create_app() -> FastAPI:
