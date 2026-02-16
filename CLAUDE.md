@@ -161,7 +161,7 @@ See `docs/plans/implementation-phases.md` for the full phase plan.
 | Phase 3: AI Pipeline (Scoring & Summarization) | Done |
 | Phase 4: Daily Pipeline & Newsletter API | Done |
 | Phase 5: User Interactions & Feedback Loop | Done |
-| Phase 6: Rewind Weekly Analysis | Not started |
+| Phase 6: Rewind Weekly Analysis | Done |
 | Phase 7: Frontend Foundation | Not started |
 | Phase 8: Today Page & Article Interactions | Not started |
 | Phase 9: Archive, Bookmarks & Settings | Not started |
