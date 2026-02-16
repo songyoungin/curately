@@ -1,6 +1,6 @@
 import { Rss, User, Settings as SettingsIcon } from 'lucide-react';
 
-import { LoadingSpinner, ErrorDisplay } from '../components/common';
+import { FeedListSkeleton, InterestProfileSkeleton, ErrorDisplay } from '../components/common';
 import FeedManager from '../components/FeedManager';
 import InterestProfile from '../components/InterestProfile';
 import { useFeeds, useInterests } from '../hooks';
@@ -43,7 +43,7 @@ export default function Settings() {
         </div>
 
         {feedsLoading ? (
-          <LoadingSpinner message="Loading feeds..." />
+          <FeedListSkeleton />
         ) : feedsError ? (
           <ErrorDisplay message={feedsError} onRetry={refetchFeeds} />
         ) : (
@@ -64,7 +64,7 @@ export default function Settings() {
         </div>
 
         {interestsLoading ? (
-          <LoadingSpinner message="Loading interests..." />
+          <InterestProfileSkeleton />
         ) : interestsError ? (
           <ErrorDisplay message={interestsError} onRetry={refetchInterests} />
         ) : (

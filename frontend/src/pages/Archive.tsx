@@ -5,7 +5,12 @@ import type { Article } from "../types";
 import CalendarView from "../components/CalendarView";
 import DateHeader from "../components/DateHeader";
 import CategorySection from "../components/CategorySection";
-import { LoadingSpinner, ErrorDisplay, EmptyState } from "../components/common";
+import {
+  ArticleCardSkeleton,
+  CalendarSkeleton,
+  ErrorDisplay,
+  EmptyState,
+} from "../components/common";
 import {
   useNewsletterEditions,
   useNewsletter,
@@ -40,7 +45,23 @@ export default function Archive() {
     useArticleInteractions(initialArticles);
 
   if (editionsLoading) {
-    return <LoadingSpinner size="lg" message="Loading archive..." />;
+    return (
+      <div>
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+          <div className="animate-pulse">
+            <div className="h-7 w-28 rounded bg-gray-200" />
+            <div className="h-4 w-52 rounded bg-gray-200 mt-2" />
+          </div>
+          <div className="animate-pulse flex gap-1 rounded-lg bg-gray-100 p-1">
+            <div className="h-8 w-24 rounded-md bg-gray-200" />
+            <div className="h-8 w-16 rounded-md bg-gray-200" />
+          </div>
+        </div>
+        <div className="mt-6">
+          <CalendarSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (editionsError) {
@@ -150,7 +171,11 @@ export default function Archive() {
         {selectedDate && (
           <div className="mt-6">
             {newsletterLoading && (
-              <LoadingSpinner message="Loading newsletter..." />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <ArticleCardSkeleton key={i} />
+                ))}
+              </div>
             )}
 
             {newsletterError && (
