@@ -160,6 +160,9 @@ def test_filter_articles_empty_when_all_below_threshold() -> None:
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
+)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -167,11 +170,12 @@ async def test_pipeline_happy_path(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    _mock_decay: AsyncMock,
 ) -> None:
     """Verify full pipeline happy path with 3 articles, 2 above threshold.
 
     Mocks: collector returns 3 articles, scorer returns scores (0.8, 0.2, 0.6),
-           summarizer returns summary text.
+           summarizer returns summary text, time decay is no-op.
     Expects: 2 articles filtered (above 0.3), 2 summarized, 2 persisted.
     """
     articles = [
@@ -225,16 +229,20 @@ async def test_pipeline_empty_collection(mock_collect: AsyncMock) -> None:
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
+)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
 async def test_pipeline_scoring_failure(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
+    _mock_decay: AsyncMock,
 ) -> None:
     """Verify pipeline handles scoring failure gracefully.
 
-    Mocks: collector returns 2 articles, scorer raises RuntimeError.
-    Expects: articles_collected=2, articles_scored=0, pipeline aborts.
+    Mocks: collector returns 1 article, scorer raises RuntimeError, time decay is no-op.
+    Expects: articles_collected=1, articles_scored=0, pipeline aborts.
     """
     mock_collect.return_value = [
         _make_article("Art 1", source_url="https://example.com/1"),
@@ -253,6 +261,9 @@ async def test_pipeline_scoring_failure(
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
+)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -260,11 +271,12 @@ async def test_pipeline_summarization_failure(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    _mock_decay: AsyncMock,
 ) -> None:
     """Verify articles are persisted without summary on summarization failure.
 
     Mocks: collector returns 1 article, scorer returns score 0.8,
-           summarizer raises RuntimeError.
+           summarizer raises RuntimeError, time decay is no-op.
     Expects: article persisted, articles_summarized=0, summary=None.
     """
     articles = [_make_article("Art 1", source_url="https://example.com/1")]
@@ -290,6 +302,9 @@ async def test_pipeline_summarization_failure(
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
+)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -297,11 +312,12 @@ async def test_pipeline_filtering_threshold_and_top_n(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    _mock_decay: AsyncMock,
 ) -> None:
     """Verify filtering respects both threshold and max_count.
 
     Mocks: 5 articles scored [0.9, 0.7, 0.5, 0.3, 0.1],
-           threshold=0.3, max_articles=2.
+           threshold=0.3, max_articles=2, time decay is no-op.
     Expects: 2 articles returned (top 2 of 4 above threshold).
     """
     articles = [
@@ -328,6 +344,9 @@ async def test_pipeline_filtering_threshold_and_top_n(
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
+)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -335,10 +354,11 @@ async def test_pipeline_newsletter_date_is_today(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    _mock_decay: AsyncMock,
 ) -> None:
     """Verify newsletter_date in result and persisted rows matches today's date.
 
-    Mocks: 1 article collected and scored above threshold.
+    Mocks: 1 article collected and scored above threshold, time decay is no-op.
     Expects: newsletter_date equals today's ISO date string.
     """
     articles = [_make_article("Art 1", source_url="https://example.com/1")]
