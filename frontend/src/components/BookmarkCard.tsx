@@ -69,9 +69,9 @@ function DetailedSummarySection({
           if (hasBullets) {
             return (
               <div key={index}>
-                <h4 className="text-sm font-semibold text-gray-700">
+                <p className="text-sm font-semibold text-gray-700">
                   {label}
-                </h4>
+                </p>
                 <ul className="mt-1 space-y-1">
                   {lines.map((line, i) => (
                     <li
@@ -88,7 +88,7 @@ function DetailedSummarySection({
 
           return (
             <div key={index}>
-              <h4 className="text-sm font-semibold text-gray-700">{label}</h4>
+              <p className="text-sm font-semibold text-gray-700">{label}</p>
               <p className="mt-1 text-sm text-gray-600">{content.trim()}</p>
             </div>
           );

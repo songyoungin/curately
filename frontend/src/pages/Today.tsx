@@ -63,7 +63,16 @@ export default function Today() {
 
   return (
     <div>
-      <DateHeader date={newsletter.date} articleCount={articles.length} />
+      <header className="pb-4 border-b border-gray-200">
+        <h1 className="text-2xl font-bold text-gray-900">Today</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Your curated articles for today.
+        </p>
+      </header>
+
+      <div className="mt-6">
+        <DateHeader date={newsletter.date} articleCount={articles.length} />
+      </div>
       <div className="mt-6">
         {sortedCategories.map((category) => (
           <CategorySection
