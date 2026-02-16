@@ -72,6 +72,7 @@ export const interestsApi = {
 
 // Rewind
 export const rewindApi = {
+  list: () => api.get<RewindReport[]>('/rewind'),
   getLatest: () => api.get<RewindReport>('/rewind/latest'),
   getById: (id: number) => api.get<RewindReport>(`/rewind/${id}`),
   generate: () => api.post<RewindReport>('/rewind/generate'),

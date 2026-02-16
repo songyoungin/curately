@@ -534,12 +534,12 @@ Build the Rewind insights page and polish the entire application's UI/UX.
 
 ### Acceptance Criteria
 
-- [ ] Rewind page displays latest weekly report with hot topics, trends, suggestions
-- [ ] Trend chart visualizes interest changes over time
-- [ ] Past Rewind reports are accessible and expandable
-- [ ] Manual Rewind generation works with appropriate loading feedback
-- [ ] All pages have consistent loading, error, and empty states
-- [ ] Smooth transitions between pages and on interactions
+- [x] Rewind page displays latest weekly report with hot topics, trends, suggestions
+- [x] Trend chart visualizes interest changes over time
+- [x] Past Rewind reports are accessible and expandable
+- [x] Manual Rewind generation works with appropriate loading feedback
+- [x] All pages have consistent loading, error, and empty states
+- [x] Smooth transitions between pages and on interactions
 - [ ] Keyboard navigation works throughout the app
 - [ ] ARIA labels present on interactive elements
 - [ ] Color contrast meets WCAG AA standards

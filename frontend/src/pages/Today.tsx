@@ -4,7 +4,7 @@ import { Newspaper } from "lucide-react";
 import type { Article } from "../types";
 import DateHeader from "../components/DateHeader";
 import CategorySection from "../components/CategorySection";
-import { LoadingSpinner, ErrorDisplay, EmptyState } from "../components/common";
+import { ArticleCardSkeleton, ErrorDisplay, EmptyState } from "../components/common";
 import { useNewsletter, useArticleInteractions } from "../hooks";
 
 export default function Today() {
@@ -17,7 +17,23 @@ export default function Today() {
     useArticleInteractions(initialArticles);
 
   if (loading) {
-    return <LoadingSpinner size="lg" message="Loading today's newsletter..." />;
+    return (
+      <div>
+        {/* Skeleton date header */}
+        <div className="flex items-center justify-between">
+          <div className="animate-pulse">
+            <div className="h-7 w-48 rounded bg-gray-200" />
+            <div className="h-4 w-24 rounded bg-gray-200 mt-2" />
+          </div>
+        </div>
+        {/* Skeleton article cards */}
+        <div className="mt-6 space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ArticleCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {

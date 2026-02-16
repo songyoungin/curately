@@ -1,7 +1,7 @@
 import { Bookmark } from "lucide-react";
 
 import BookmarkCard from "../components/BookmarkCard";
-import { LoadingSpinner, ErrorDisplay, EmptyState } from "../components/common";
+import { BookmarkCardSkeleton, ErrorDisplay, EmptyState } from "../components/common";
 import { useBookmarks } from "../hooks";
 
 export default function Bookmarks() {
@@ -9,7 +9,19 @@ export default function Bookmarks() {
     useBookmarks();
 
   if (loading) {
-    return <LoadingSpinner size="lg" message="Loading your bookmarks..." />;
+    return (
+      <div>
+        <div className="animate-pulse">
+          <div className="h-7 w-36 rounded bg-gray-200" />
+          <div className="h-4 w-48 rounded bg-gray-200 mt-2" />
+        </div>
+        <div className="mt-6 space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <BookmarkCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {

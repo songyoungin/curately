@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Curately is an AI-curated personal tech newsletter. It collects articles from RSS feeds daily, scores them against user interests using Gemini 2.5 Flash, generates Korean summaries, and serves a web UI for browsing, liking, bookmarking, and tracking interest trends over time.
 
-**Status**: Phase 8 complete — Frontend with Today page, article interactions, and MSW mock API.
+**Status**: Phase 10 in progress — Rewind UI implementation and app-wide polish.
 
 ## Tech Stack
 
@@ -179,8 +179,8 @@ See `docs/plans/implementation-phases.md` for the full phase plan.
 | Phase 6: Rewind Weekly Analysis | Done |
 | Phase 7: Frontend Foundation | Done |
 | Phase 8: Today Page & Article Interactions | Done |
-| Phase 9: Archive, Bookmarks & Settings | Not started |
-| Phase 10: Rewind UI & Polish | Not started |
+| Phase 9: Archive, Bookmarks & Settings | Done |
+| Phase 10: Rewind UI & Polish | In progress |
 | Phase 11: Integration Testing & Final QA | Not started |
 
 ## Reference
