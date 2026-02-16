@@ -27,10 +27,15 @@ export const handlers = [
   // GET /api/newsletters/:date
   http.get('/api/newsletters/:date', ({ params }) => {
     const { date } = params;
-    const articles = mockArticles.filter((a) => a.newsletter_date === date);
-    if (articles.length === 0) {
+    const edition = mockEditions.find((e) => e.date === date);
+    if (!edition) {
       return new HttpResponse(null, { status: 404 });
     }
+    // Return mock articles adjusted to the requested date
+    const articles = mockArticles.slice(0, edition.article_count).map((a) => ({
+      ...a,
+      newsletter_date: date as string,
+    }));
     return HttpResponse.json({
       date,
       article_count: articles.length,
