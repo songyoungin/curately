@@ -11,6 +11,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  checklist:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR checklist completion
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const unchecked = (body.match(/- \[ \]/g) || []).length;
+            const checked = (body.match(/- \[x\]/gi) || []).length;
+            const total = unchecked + checked;
+
+            if (total === 0) {
+              console.log('No checklist items found in PR body. Skipping check.');
+              return;
+            }
+
+            console.log(`Checklist: ${checked}/${total} items checked`);
+
+            if (unchecked > 0) {
+              core.setFailed(
+                `${unchecked} unchecked item(s) remaining in PR checklist. ` +
+                `Please complete all checklist items before merging.`
+              );
+            }
+
   lint:
     runs-on: ubuntu-latest
     steps:
