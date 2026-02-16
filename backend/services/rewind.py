@@ -142,7 +142,7 @@ async def persist_rewind_report(
     Returns:
         ID of the inserted report row.
     """
-    row = {
+    row: dict[str, Any] = {
         "user_id": user_id,
         "period_start": period_start.isoformat(),
         "period_end": period_end.isoformat(),
