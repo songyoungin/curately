@@ -32,6 +32,7 @@ frontend/.vite/
 
 # Serena
 .serena/
+.playwright-mcp/
 
 # OS files
 .DS_Store
