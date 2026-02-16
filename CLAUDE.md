@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Curately is an AI-curated personal tech newsletter. It collects articles from RSS feeds daily, scores them against user interests using Gemini 2.5 Flash, generates Korean summaries, and serves a web UI for browsing, liking, bookmarking, and tracking interest trends over time.
 
-**Status**: Phase 3 complete — RSS collection, AI scoring, and summarization implemented.
+**Status**: Phase 8 complete — Frontend with Today page, article interactions, and MSW mock API.
 
 ## Tech Stack
 
@@ -32,9 +32,9 @@ Curately is an AI-curated personal tech newsletter. It collects articles from RS
 uv sync                                        # Install Python dependencies
 uv run uvicorn backend.main:app --reload       # Start backend dev server
 
-# Frontend
+# Frontend (MSW auto-mocks all API endpoints in dev — no backend needed)
 cd frontend && npm install                     # Install Node dependencies
-cd frontend && npm run dev                     # Start frontend dev server
+cd frontend && npm run dev                     # Start frontend dev server (with mock API)
 
 # Testing
 uv run pytest                                  # Run all tests
@@ -74,8 +74,12 @@ RSS Feeds → **Collector** (feedparser, dedup by source_url) → **Scorer** (Ge
 
 ### Frontend Structure (`frontend/src/`)
 
-- `api/client.ts` — Axios-based API client
-- `lib/supabase.ts` — Supabase JS client for auth
+- `api/client.ts` — Axios-based API client with typed endpoint functions
+- `lib/supabase.ts` — Supabase JS client for auth (null when env vars not set)
+- `hooks/` — Custom React hooks (`useNewsletter`, `useArticleInteractions`)
+- `types/` — TypeScript type definitions matching backend Pydantic models
+- `components/` — NavBar, ArticleCard, CategorySection, DateHeader, common UI (LoadingSpinner, ErrorDisplay, EmptyState)
+- `mocks/` — MSW mock data and API handlers for development
 - Pages: Today (main feed by category), Archive (calendar browse), Bookmarks (detailed summaries), Rewind (weekly trends), Settings (feeds + interests)
 
 ### Key Design Decisions
@@ -107,6 +111,17 @@ Uses `ruff` for both linting and formatting (no `black`):
 - Standard hooks: trailing-whitespace, end-of-file-fixer, check-yaml/json/toml, debug-statements, etc.
 
 > After cloning, run `uv run pre-commit install && uv run pre-commit install --hook-type commit-msg` to enable all hooks including commit message checks.
+
+## Mock API (MSW)
+
+The frontend uses [MSW (Mock Service Worker)](https://mswjs.io/) to mock all backend API endpoints during development. This allows full UI development and testing without running the backend or connecting to a database.
+
+- **Auto-start**: MSW starts automatically in development mode (`npm run dev`). No configuration needed.
+- **Production**: MSW is NOT included in production builds — it's tree-shaken out.
+- **Mock data**: `frontend/src/mocks/data.ts` — realistic fixtures for all entities (10 articles, 5 feeds, 8 interests, rewind report)
+- **Handlers**: `frontend/src/mocks/handlers.ts` — request handlers for all 17 API endpoints
+- **Stateful**: Like/bookmark toggles mutate mock data, so subsequent requests reflect changes
+- **Customization**: Edit mock data to test different scenarios (empty states, many articles, error states)
 
 ## Coding Patterns
 
@@ -162,8 +177,8 @@ See `docs/plans/implementation-phases.md` for the full phase plan.
 | Phase 4: Daily Pipeline & Newsletter API | Done |
 | Phase 5: User Interactions & Feedback Loop | Done |
 | Phase 6: Rewind Weekly Analysis | Done |
-| Phase 7: Frontend Foundation | Not started |
-| Phase 8: Today Page & Article Interactions | Not started |
+| Phase 7: Frontend Foundation | Done |
+| Phase 8: Today Page & Article Interactions | Done |
 | Phase 9: Archive, Bookmarks & Settings | Not started |
 | Phase 10: Rewind UI & Polish | Not started |
 | Phase 11: Integration Testing & Final QA | Not started |
