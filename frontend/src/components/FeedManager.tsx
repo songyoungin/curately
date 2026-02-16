@@ -93,18 +93,28 @@ export default function FeedManager({
       {/* Add feed form */}
       <form onSubmit={handleSubmit} className="mb-6 space-y-3">
         <div className="flex gap-3">
+          <label htmlFor="feed-name" className="sr-only">
+            Feed name
+          </label>
           <input
+            id="feed-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Feed name"
             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+          <label htmlFor="feed-url" className="sr-only">
+            Feed URL
+          </label>
           <input
+            id="feed-url"
             type="text"
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
             placeholder="https://example.com/feed"
+            aria-invalid={Boolean(urlError)}
+            aria-describedby={urlError ? "feed-url-error" : undefined}
             className={`flex-[2] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
               urlError
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
@@ -122,7 +132,10 @@ export default function FeedManager({
         </div>
 
         {urlError && (
-          <div className="flex items-center gap-1.5 text-sm text-red-600">
+          <div
+            id="feed-url-error"
+            className="flex items-center gap-1.5 text-sm text-red-600"
+          >
             <AlertCircle className="w-3.5 h-3.5" />
             {urlError}
           </div>

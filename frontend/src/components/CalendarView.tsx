@@ -94,9 +94,9 @@ export default function CalendarView({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900">
           {formatMonth(viewYear, viewMonth)}
-        </h3>
+        </h2>
         <button
           onClick={goToNextMonth}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
@@ -136,6 +136,12 @@ export default function CalendarView({
               key={dateStr}
               onClick={() => hasEdition && onSelectDate(dateStr)}
               disabled={!hasEdition}
+              aria-label={
+                hasEdition
+                  ? `${dateStr}, ${articleCount} articles`
+                  : `${dateStr}, no newsletter`
+              }
+              aria-pressed={isSelected}
               className={`
                 relative flex flex-col items-center justify-center py-2 rounded-lg text-sm transition-colors
                 ${isSelected ? "bg-blue-600 text-white" : ""}
