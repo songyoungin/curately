@@ -20,8 +20,8 @@ jobs:
         with:
           script: |
             const body = context.payload.pull_request.body || '';
-            const unchecked = (body.match(/- \[ \]/g) || []).length;
-            const checked = (body.match(/- \[x\]/gi) || []).length;
+            const unchecked = (body.match(/^[ \t]*- \[ \]/gm) || []).length;
+            const checked = (body.match(/^[ \t]*- \[x\]/gim) || []).length;
             const total = unchecked + checked;
 
             if (total === 0) {
