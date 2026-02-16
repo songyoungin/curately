@@ -4,7 +4,7 @@ import {
   mockEditions,
   mockFeeds,
   mockInterests,
-  mockRewindReport,
+  mockRewindReports,
 } from './data';
 
 export const handlers = [
@@ -126,19 +126,30 @@ export const handlers = [
     return HttpResponse.json(mockInterests);
   }),
 
-  // GET /api/rewind/latest
+  // GET /api/rewind/latest (must be before /api/rewind/:id to avoid route conflict)
   http.get('/api/rewind/latest', () => {
-    return HttpResponse.json(mockRewindReport);
+    return HttpResponse.json(mockRewindReports[0]);
+  }),
+
+  // GET /api/rewind (list all reports)
+  http.get('/api/rewind', () => {
+    return HttpResponse.json(mockRewindReports);
   }),
 
   // GET /api/rewind/:id
-  http.get('/api/rewind/:id', () => {
-    return HttpResponse.json(mockRewindReport);
+  http.get('/api/rewind/:id', ({ params }) => {
+    const report = mockRewindReports.find(
+      (r) => r.id === Number(params.id),
+    );
+    if (!report) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json(report);
   }),
 
   // POST /api/rewind/generate
   http.post('/api/rewind/generate', () => {
-    return HttpResponse.json(mockRewindReport, { status: 201 });
+    return HttpResponse.json(mockRewindReports[0], { status: 201 });
   }),
 
   // POST /api/pipeline/run

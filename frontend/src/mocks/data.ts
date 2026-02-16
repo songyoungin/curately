@@ -336,26 +336,100 @@ export const mockEditions: NewsletterEdition[] = [
   { date: '2026-02-10', article_count: 6 },
 ];
 
-export const mockRewindReport: RewindReport = {
-  id: 1,
-  user_id: 1,
-  period_start: '2026-02-09',
-  period_end: '2026-02-16',
-  report_content: {
-    overview:
-      'This week focused on AI and infrastructure topics. LLM advancements dominated the news cycle, with significant updates from major AI labs. DevOps tooling also saw notable releases, particularly in the Kubernetes ecosystem.',
+export const mockRewindReports: RewindReport[] = [
+  {
+    id: 4,
+    user_id: 1,
+    period_start: '2026-02-09',
+    period_end: '2026-02-16',
+    report_content: {
+      overview:
+        'This week focused on AI and infrastructure topics. LLM advancements dominated the news cycle, with significant updates from major AI labs. DevOps tooling also saw notable releases, particularly in the Kubernetes ecosystem.',
+    },
+    hot_topics: [
+      { topic: 'LLM Agents', count: 5 },
+      { topic: 'Kubernetes', count: 3 },
+      { topic: 'PostgreSQL', count: 2 },
+      { topic: 'MLOps', count: 2 },
+    ],
+    trend_changes: [
+      { keyword: 'machine-learning', direction: 'rising', weight_change: 2.7 },
+      { keyword: 'kubernetes', direction: 'rising', weight_change: 1.3 },
+      { keyword: 'docker', direction: 'declining', weight_change: -1.2 },
+      { keyword: 'react', direction: 'declining', weight_change: -0.5 },
+    ],
+    created_at: '2026-02-16T07:00:00Z',
   },
-  hot_topics: [
-    { topic: 'LLM Agents', count: 5 },
-    { topic: 'Kubernetes', count: 3 },
-    { topic: 'PostgreSQL', count: 2 },
-    { topic: 'MLOps', count: 2 },
-  ],
-  trend_changes: [
-    { keyword: 'machine-learning', direction: 'rising', weight_change: 2.7 },
-    { keyword: 'kubernetes', direction: 'rising', weight_change: 1.3 },
-    { keyword: 'docker', direction: 'declining', weight_change: -1.2 },
-    { keyword: 'react', direction: 'declining', weight_change: -0.5 },
-  ],
-  created_at: '2026-02-16T07:00:00Z',
-};
+  {
+    id: 3,
+    user_id: 1,
+    period_start: '2026-02-02',
+    period_end: '2026-02-09',
+    report_content: {
+      overview:
+        'A strong week for backend engineering topics. Database performance and API design were the most discussed areas, with several high-quality articles on PostgreSQL optimization and GraphQL adoption.',
+    },
+    hot_topics: [
+      { topic: 'PostgreSQL', count: 4 },
+      { topic: 'GraphQL', count: 3 },
+      { topic: 'API Design', count: 3 },
+      { topic: 'Caching', count: 2 },
+    ],
+    trend_changes: [
+      { keyword: 'postgresql', direction: 'rising', weight_change: 1.8 },
+      { keyword: 'graphql', direction: 'rising', weight_change: 1.5 },
+      { keyword: 'machine-learning', direction: 'declining', weight_change: -0.8 },
+      { keyword: 'terraform', direction: 'declining', weight_change: -0.3 },
+    ],
+    created_at: '2026-02-09T07:00:00Z',
+  },
+  {
+    id: 2,
+    user_id: 1,
+    period_start: '2026-01-26',
+    period_end: '2026-02-02',
+    report_content: {
+      overview:
+        'Frontend and DevOps topics led the week. React Server Components gained significant traction, and there was renewed interest in container orchestration with new Kubernetes tooling announcements.',
+    },
+    hot_topics: [
+      { topic: 'React Server Components', count: 4 },
+      { topic: 'Docker', count: 3 },
+      { topic: 'TypeScript', count: 2 },
+      { topic: 'CI/CD', count: 2 },
+    ],
+    trend_changes: [
+      { keyword: 'react', direction: 'rising', weight_change: 2.1 },
+      { keyword: 'docker', direction: 'rising', weight_change: 1.6 },
+      { keyword: 'python', direction: 'declining', weight_change: -0.9 },
+      { keyword: 'kubernetes', direction: 'declining', weight_change: -0.4 },
+    ],
+    created_at: '2026-02-02T07:00:00Z',
+  },
+  {
+    id: 1,
+    user_id: 1,
+    period_start: '2026-01-19',
+    period_end: '2026-01-26',
+    report_content: {
+      overview:
+        'AI safety and Python ecosystem updates were the dominant themes. New model evaluation frameworks attracted attention, alongside major Python packaging improvements with uv gaining widespread adoption.',
+    },
+    hot_topics: [
+      { topic: 'AI Safety', count: 5 },
+      { topic: 'Python Packaging', count: 3 },
+      { topic: 'Model Evaluation', count: 2 },
+      { topic: 'WebAssembly', count: 2 },
+    ],
+    trend_changes: [
+      { keyword: 'python', direction: 'rising', weight_change: 2.3 },
+      { keyword: 'machine-learning', direction: 'rising', weight_change: 1.1 },
+      { keyword: 'react', direction: 'declining', weight_change: -1.4 },
+      { keyword: 'devops', direction: 'declining', weight_change: -0.6 },
+    ],
+    created_at: '2026-01-26T07:00:00Z',
+  },
+];
+
+// Keep backward-compatible alias for existing code
+export const mockRewindReport: RewindReport = mockRewindReports[0];
