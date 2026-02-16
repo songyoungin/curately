@@ -153,7 +153,7 @@ export default function CalendarView({
               <span>{day}</span>
               {hasEdition && (
                 <span
-                  className={`text-[10px] leading-none mt-0.5 ${isSelected ? "text-blue-200" : "text-blue-500"}`}
+                  className={`text-[10px] leading-none mt-0.5 ${isSelected ? "text-white" : "text-blue-500"}`}
                 >
                   {articleCount}
                 </span>
