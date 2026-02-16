@@ -16,6 +16,7 @@ from supabase import Client
 from backend.config import Settings, get_settings
 from backend.services.collector import collect_articles
 from backend.services.scorer import score_articles
+from backend.services.interests import apply_time_decay
 from backend.services.summarizer import generate_basic_summary
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ async def run_daily_pipeline(
 
     Stages:
         1. Collect new articles from RSS feeds
-        2. Load user interest keywords
+        2. Load user interest keywords and apply time decay
         3. Score articles against interests
         4. Filter by relevance threshold and select top N
         5. Generate Korean summaries for filtered articles
@@ -59,7 +60,7 @@ async def run_daily_pipeline(
     logger.info("Starting daily pipeline for %s", today)
 
     # Stage 1: Collect articles
-    logger.info("Stage 1/6: Collecting articles from RSS feeds")
+    logger.info("Stage 1/7: Collecting articles from RSS feeds")
     articles = await collect_articles(client)
     if not articles:
         logger.info("No new articles collected, pipeline complete")
@@ -73,12 +74,20 @@ async def run_daily_pipeline(
     logger.info("Collected %d new article(s)", len(articles))
 
     # Stage 2: Load user interests
-    logger.info("Stage 2/6: Loading user interests")
-    interests = _load_user_interests(client)
+    logger.info("Stage 2/7: Loading user interests")
+    user_id, interests = _load_user_interests(client)
     logger.info("Loaded %d interest keyword(s)", len(interests))
 
+    # Stage 2.5: Apply time decay to stale interests
+    if user_id is not None:
+        logger.info("Applying time decay to stale interests")
+        decayed = await apply_time_decay(client, user_id, settings)
+        if decayed > 0:
+            logger.info("Decayed %d interest(s), reloading interests", decayed)
+            _, interests = _load_user_interests(client)
+
     # Stage 3: Score articles
-    logger.info("Stage 3/6: Scoring articles against user interests")
+    logger.info("Stage 3/7: Scoring articles against user interests")
     try:
         score_results = await score_articles(articles, interests, settings)
     except Exception:
@@ -107,7 +116,7 @@ async def run_daily_pipeline(
 
     # Stage 4: Filter articles
     logger.info(
-        "Stage 4/6: Filtering articles (threshold=%.2f, max=%d)",
+        "Stage 4/7: Filtering articles (threshold=%.2f, max=%d)",
         settings.pipeline.relevance_threshold,
         settings.pipeline.max_articles_per_newsletter,
     )
@@ -119,7 +128,7 @@ async def run_daily_pipeline(
     logger.info("Filtered to %d article(s)", len(filtered))
 
     # Stage 5: Summarize articles
-    logger.info("Stage 5/6: Generating summaries")
+    logger.info("Stage 5/7: Generating summaries")
     summarized_count = 0
     for article in filtered:
         try:
@@ -138,7 +147,7 @@ async def run_daily_pipeline(
     logger.info("Summarized %d article(s)", summarized_count)
 
     # Stage 6: Persist articles
-    logger.info("Stage 6/6: Persisting articles to database")
+    logger.info("Stage 6/7: Persisting articles to database")
     _persist_articles(client, filtered, today)
     logger.info("Persisted %d article(s) for newsletter date %s", len(filtered), today)
 
@@ -153,14 +162,17 @@ async def run_daily_pipeline(
     return result
 
 
-def _load_user_interests(client: Client) -> list[dict[str, Any]]:
+def _load_user_interests(
+    client: Client,
+) -> tuple[int | None, list[dict[str, Any]]]:
     """Load top 20 interest keywords by weight for the default user.
 
     Args:
         client: Supabase client instance.
 
     Returns:
-        List of interest dicts with keyword and weight.
+        Tuple of (user_id, interests). user_id is None if the default user
+        is not found.
     """
     response = (
         client.table("users")
@@ -171,9 +183,9 @@ def _load_user_interests(client: Client) -> list[dict[str, Any]]:
     users = cast(list[dict[str, Any]], response.data)
     if not users:
         logger.warning("Default user not found, returning empty interests")
-        return []
+        return None, []
 
-    user_id = users[0]["id"]
+    user_id: int = users[0]["id"]
     response = (
         client.table("user_interests")
         .select("keyword, weight")
@@ -182,7 +194,7 @@ def _load_user_interests(client: Client) -> list[dict[str, Any]]:
         .limit(20)
         .execute()
     )
-    return cast(list[dict[str, Any]], response.data)
+    return user_id, cast(list[dict[str, Any]], response.data)
 
 
 def _filter_articles(
