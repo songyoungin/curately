@@ -24,6 +24,7 @@ wheels/
 .coverage
 htmlcov/
 .mypy_cache/
+/test-results/
 /frontend/test-results/
 /frontend/playwright-report/
 /frontend/blob-report/
