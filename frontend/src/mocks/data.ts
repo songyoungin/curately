@@ -98,7 +98,8 @@ export const mockArticles: Article[] = [
     raw_content: null,
     summary:
       'Kubernetes 1.33이 출시되면서 사이드카 컨테이너 네이티브 지원과 개선된 스케줄링 알고리즘이 도입되었습니다. 메모리 사용량이 15% 감소했으며, Pod 시작 시간도 크게 단축되었습니다.',
-    detailed_summary: null,
+    detailed_summary:
+      '**Background:** Kubernetes 1.33 is a major release that addresses long-standing pain points in container orchestration. The community has been requesting native sidecar support for years, and this release finally delivers it alongside significant performance improvements.\n\n**Key Takeaways:**\n- Native sidecar container support eliminates the need for workarounds and init container hacks\n- Improved scheduling algorithm reduces pod startup time by up to 25%\n- Memory usage reduced by 15% through optimized etcd interactions\n- New priority-based preemption ensures critical workloads always have resources\n- Graduated features: Pod Disruption Conditions and MinReadySeconds for StatefulSets\n\n**Keywords:** kubernetes, sidecar-containers, scheduling, cloud-native',
     relevance_score: 0.78,
     categories: ['DevOps'],
     keywords: ['kubernetes', 'container', 'orchestration'],
@@ -160,7 +161,8 @@ export const mockArticles: Article[] = [
     raw_content: null,
     summary:
       'PostgreSQL 17의 성능 개선 사항을 심층 분석합니다. 병렬 쿼리 실행이 30% 향상되었고, JSONB 인덱싱 성능도 대폭 개선되었습니다. 대규모 테이블의 VACUUM 작업 효율성도 눈에 띄게 좋아졌습니다.',
-    detailed_summary: null,
+    detailed_summary:
+      '**Background:** PostgreSQL 17 continues the tradition of annual major releases with a focus on performance. As organizations handle increasingly large datasets, these improvements directly impact query response times and operational costs.\n\n**Key Takeaways:**\n- Parallel query execution improved by 30%, benefiting complex analytical queries\n- JSONB indexing performance significantly enhanced for document-heavy workloads\n- VACUUM operation efficiency improved for large tables, reducing maintenance windows\n- New incremental backup feature reduces backup storage by up to 60%\n- Logical replication now supports failover, enabling true high-availability setups\n\n**Keywords:** postgresql, database-performance, parallel-queries, jsonb',
     relevance_score: 0.72,
     categories: ['Backend'],
     keywords: ['postgresql', 'database', 'performance'],
