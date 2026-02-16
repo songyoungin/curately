@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Newspaper } from "lucide-react";
 
 import type { Article } from "../types";
@@ -8,9 +9,12 @@ import { useNewsletter, useArticleInteractions } from "../hooks";
 
 export default function Today() {
   const { newsletter, loading, error, refetch } = useNewsletter();
-  const { articles, toggleLike, toggleBookmark } = useArticleInteractions(
-    newsletter?.articles ?? [],
+  const initialArticles = useMemo(
+    () => newsletter?.articles ?? [],
+    [newsletter],
   );
+  const { articles, toggleLike, toggleBookmark } =
+    useArticleInteractions(initialArticles);
 
   if (loading) {
     return <LoadingSpinner size="lg" message="Loading today's newsletter..." />;
