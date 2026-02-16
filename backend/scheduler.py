@@ -7,11 +7,15 @@ Start and stop functions are designed to be called from the FastAPI lifespan.
 from __future__ import annotations
 
 import logging
+from datetime import date, timedelta
+from typing import Any, cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from backend.config import get_settings
+from backend.seed import DEFAULT_USER_EMAIL
 from backend.services.pipeline import run_daily_pipeline
+from backend.services.rewind import generate_rewind_report, persist_rewind_report
 from backend.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -22,7 +26,7 @@ _scheduler: AsyncIOScheduler | None = None
 def start_scheduler() -> AsyncIOScheduler:
     """Start the APScheduler with configured jobs.
 
-    Registers the daily pipeline job and a weekly rewind stub,
+    Registers the daily pipeline job and weekly rewind analysis,
     then starts the scheduler.
 
     Returns:
@@ -49,7 +53,7 @@ def start_scheduler() -> AsyncIOScheduler:
         settings.schedule.daily_pipeline_minute,
     )
 
-    # Weekly rewind job (stub)
+    # Weekly rewind job
     _scheduler.add_job(
         _run_weekly_rewind_job,
         trigger="cron",
@@ -94,5 +98,48 @@ async def _run_daily_pipeline_job() -> None:
 
 
 async def _run_weekly_rewind_job() -> None:
-    """Execute the weekly rewind analysis (stub)."""
-    logger.info("Weekly rewind job triggered (not yet implemented)")
+    """Execute the weekly rewind analysis for the default user."""
+    logger.info("Weekly rewind job triggered")
+    try:
+        client = get_supabase_client()
+        settings = get_settings()
+
+        # Resolve default user ID
+        user_id = _get_default_user_id(client)
+        if user_id is None:
+            logger.warning("Default user not found, skipping rewind")
+            return
+
+        period_end = date.today()
+        period_start = period_end - timedelta(days=7)
+
+        report = await generate_rewind_report(client, user_id, settings)
+        report_id = await persist_rewind_report(
+            client, user_id, report, period_start, period_end
+        )
+        logger.info(
+            "Weekly rewind complete: report_id=%d, period=%s to %s",
+            report_id,
+            period_start,
+            period_end,
+        )
+    except Exception:
+        logger.exception("Weekly rewind job failed")
+
+
+def _get_default_user_id(client: Any) -> int | None:
+    """Look up the default MVP user's ID.
+
+    Args:
+        client: Supabase client instance.
+
+    Returns:
+        User ID or None if the default user does not exist.
+    """
+    response = (
+        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
+    )
+    rows = cast(list[dict[str, Any]], response.data)
+    if not rows:
+        return None
+    return int(rows[0]["id"])
