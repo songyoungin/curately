@@ -145,6 +145,11 @@ export default function FeedManager({
       </form>
 
       {/* Feed list */}
+      {feeds.length === 0 && (
+        <p className="text-sm text-gray-500 text-center py-4">
+          No feeds configured yet. Add one above to get started.
+        </p>
+      )}
       <div className="space-y-2">
         {feeds.map((feed) => (
           <div
