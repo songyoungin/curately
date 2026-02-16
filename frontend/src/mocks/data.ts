@@ -345,6 +345,7 @@ export const mockRewindReports: RewindReport[] = [
     report_content: {
       overview:
         'This week focused on AI and infrastructure topics. LLM advancements dominated the news cycle, with significant updates from major AI labs. DevOps tooling also saw notable releases, particularly in the Kubernetes ecosystem.',
+      suggestions: ['MLOps', 'AI safety', 'Kubernetes security'],
     },
     hot_topics: [
       { topic: 'LLM Agents', count: 5 },
@@ -368,6 +369,7 @@ export const mockRewindReports: RewindReport[] = [
     report_content: {
       overview:
         'A strong week for backend engineering topics. Database performance and API design were the most discussed areas, with several high-quality articles on PostgreSQL optimization and GraphQL adoption.',
+      suggestions: ['Database observability', 'Caching strategies'],
     },
     hot_topics: [
       { topic: 'PostgreSQL', count: 4 },
@@ -391,6 +393,7 @@ export const mockRewindReports: RewindReport[] = [
     report_content: {
       overview:
         'Frontend and DevOps topics led the week. React Server Components gained significant traction, and there was renewed interest in container orchestration with new Kubernetes tooling announcements.',
+      suggestions: ['React performance', 'CI automation'],
     },
     hot_topics: [
       { topic: 'React Server Components', count: 4 },
@@ -414,6 +417,7 @@ export const mockRewindReports: RewindReport[] = [
     report_content: {
       overview:
         'AI safety and Python ecosystem updates were the dominant themes. New model evaluation frameworks attracted attention, alongside major Python packaging improvements with uv gaining widespread adoption.',
+      suggestions: ['Model evaluation', 'Python tooling'],
     },
     hot_topics: [
       { topic: 'AI Safety', count: 5 },

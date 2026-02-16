@@ -1,6 +1,12 @@
 import { Flame, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 
 import type { RewindReport as RewindReportType } from '../types/rewind';
+import {
+  getOverview,
+  getSuggestions,
+  normalizeHotTopics,
+  normalizeTrendChanges,
+} from '../lib/rewind';
 
 interface RewindReportProps {
   report: RewindReportType;
@@ -63,15 +69,14 @@ function TrendItem({
 }
 
 export default function RewindReport({ report }: RewindReportProps) {
-  const overview =
-    report.report_content && typeof report.report_content.overview === 'string'
-      ? report.report_content.overview
-      : null;
-
-  const risingTrends = report.trend_changes.filter(
+  const overview = getOverview(report);
+  const suggestions = getSuggestions(report);
+  const hotTopics = normalizeHotTopics(report);
+  const trendChanges = normalizeTrendChanges(report);
+  const risingTrends = trendChanges.filter(
     (t) => t.direction === 'rising',
   );
-  const decliningTrends = report.trend_changes.filter(
+  const decliningTrends = trendChanges.filter(
     (t) => t.direction === 'declining',
   );
 
@@ -101,13 +106,13 @@ export default function RewindReport({ report }: RewindReportProps) {
       )}
 
       {/* Hot Topics */}
-      {report.hot_topics.length > 0 && (
+      {hotTopics.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Hot Topics
           </h3>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {report.hot_topics.map((ht) => (
+            {hotTopics.map((ht) => (
               <HotTopicBadge key={ht.topic} topic={ht.topic} count={ht.count} />
             ))}
           </div>
@@ -115,7 +120,7 @@ export default function RewindReport({ report }: RewindReportProps) {
       )}
 
       {/* Trend Changes */}
-      {report.trend_changes.length > 0 && (
+      {trendChanges.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Rising */}
           {risingTrends.length > 0 && (
@@ -156,6 +161,25 @@ export default function RewindReport({ report }: RewindReportProps) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-4">
+          <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">
+            Suggestions For Next Week
+          </h3>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {suggestions.map((suggestion) => (
+              <li
+                key={suggestion}
+                className="rounded-full bg-white border border-indigo-200 px-3 py-1 text-sm text-indigo-700"
+              >
+                {suggestion}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
