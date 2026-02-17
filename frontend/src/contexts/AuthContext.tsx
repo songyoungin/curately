@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(initialSession);
       if (initialSession?.access_token) {
         fetchUser(initialSession.access_token).finally(() => setLoading(false));
-      } else if (import.meta.env.DEV) {
+      } else if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW !== 'false') {
         // In dev mode with MSW, auto-login with mock user
         fetchMockUser().finally(() => setLoading(false));
       } else {
