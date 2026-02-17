@@ -166,7 +166,8 @@ def test_invalid_token_returns_401(
         "/protected", headers={"Authorization": "Bearer not-a-valid-jwt"}
     )
     assert response.status_code == 401
-    assert "invalid" in response.json()["detail"].lower()
+    detail = response.json()["detail"].lower()
+    assert "invalid" in detail or "malformed" in detail
 
 
 def test_missing_auth_header_returns_401() -> None:

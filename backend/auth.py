@@ -6,6 +6,7 @@ import logging
 from typing import Any, cast
 
 import jwt
+from jwt import PyJWKClient
 from fastapi import Header, HTTPException, status
 
 from backend.config import get_settings
@@ -13,14 +14,27 @@ from backend.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
+# Cache the JWKS client so we don't fetch keys on every request
+_jwks_client: PyJWKClient | None = None
+
+
+def _get_jwks_client() -> PyJWKClient:
+    """Return a cached PyJWKClient for the Supabase JWKS endpoint."""
+    global _jwks_client  # noqa: PLW0603
+    if _jwks_client is None:
+        settings = get_settings()
+        jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+        _jwks_client = PyJWKClient(jwks_url, cache_keys=True)
+    return _jwks_client
+
 
 async def get_current_user_id(
     authorization: str | None = Header(default=None),
 ) -> int:
     """Extract and verify the JWT from the Authorization header.
 
-    Decodes the Supabase JWT, extracts the user's email and Google sub,
-    then upserts into the users table and returns the internal user ID.
+    Supports both ES256 (JWKS) and HS256 (shared secret) tokens.
+    Supabase may use either depending on project configuration.
 
     Args:
         authorization: Bearer token from the Authorization header.
@@ -37,14 +51,6 @@ async def get_current_user_id(
             detail="Authorization header required",
         )
 
-    settings = get_settings()
-
-    if not settings.supabase_jwt_secret:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="SUPABASE_JWT_SECRET not configured",
-        )
-
     if not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -52,20 +58,47 @@ async def get_current_user_id(
         )
 
     token = authorization.removeprefix("Bearer ")
+    settings = get_settings()
 
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
+        header = jwt.get_unverified_header(token)
+    except jwt.exceptions.DecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed token",
         )
+
+    try:
+        if header.get("alg") == "HS256":
+            # Legacy: symmetric HMAC verification
+            if not settings.supabase_jwt_secret:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="SUPABASE_JWT_SECRET not configured",
+                )
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
+        else:
+            # ES256 / asymmetric: verify via JWKS public key
+            jwks_client = _get_jwks_client()
+            signing_key = jwks_client.get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["ES256"],
+                audience="authenticated",
+            )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
         )
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as exc:
+        logger.error("JWT verification failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
