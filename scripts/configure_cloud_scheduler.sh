@@ -15,6 +15,7 @@ set -euo pipefail
 # - WEEKLY_JOB_NAME (default: curately-weekly-rewind)
 # - WEEKLY_SCHEDULE (default: 0 23 * * 0)
 # - SCHEDULE_TIMEZONE (default: Etc/UTC)
+# - ENABLE_REQUIRED_APIS (default: true)
 
 required_vars=(
   GCP_PROJECT
@@ -35,9 +36,14 @@ DAILY_SCHEDULE="${DAILY_SCHEDULE:-0 6 * * *}"
 WEEKLY_JOB_NAME="${WEEKLY_JOB_NAME:-curately-weekly-rewind}"
 WEEKLY_SCHEDULE="${WEEKLY_SCHEDULE:-0 23 * * 0}"
 SCHEDULE_TIMEZONE="${SCHEDULE_TIMEZONE:-Etc/UTC}"
+ENABLE_REQUIRED_APIS="${ENABLE_REQUIRED_APIS:-true}"
 
-echo "Enabling Cloud Scheduler API..."
-gcloud services enable cloudscheduler.googleapis.com --project "${GCP_PROJECT}"
+if [[ "${ENABLE_REQUIRED_APIS}" == "true" ]]; then
+  echo "Enabling Cloud Scheduler API..."
+  gcloud services enable cloudscheduler.googleapis.com --project "${GCP_PROJECT}"
+else
+  echo "Skipping API enable step (ENABLE_REQUIRED_APIS=${ENABLE_REQUIRED_APIS})"
+fi
 
 upsert_job() {
   local job_name="$1"
