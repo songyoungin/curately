@@ -175,28 +175,29 @@ async def run_daily_pipeline(
 
 def _load_user_interests(
     client: Client,
+    user_id: int | None = None,
 ) -> tuple[int | None, list[dict[str, Any]]]:
-    """Load top 20 interest keywords by weight for the default user.
+    """Load top 20 interest keywords by weight for a user.
+
+    If user_id is not provided, aggregates interests across all users.
+    Falls back to empty interests if no users exist.
 
     Args:
         client: Supabase client instance.
+        user_id: Specific user ID, or None to aggregate across all users.
 
     Returns:
-        Tuple of (user_id, interests). user_id is None if the default user
-        is not found.
+        Tuple of (user_id, interests). user_id is None if no user found.
     """
-    response = (
-        client.table("users")
-        .select("id")
-        .eq("email", "default@curately.local")
-        .execute()
-    )
-    users = cast(list[dict[str, Any]], response.data)
-    if not users:
-        logger.warning("Default user not found, returning empty interests")
-        return None, []
+    if user_id is None:
+        # Aggregate mode: find the first user with interests
+        response = client.table("users").select("id").limit(1).execute()
+        users = cast(list[dict[str, Any]], response.data)
+        if not users:
+            logger.warning("No users found, returning empty interests")
+            return None, []
+        user_id = users[0]["id"]
 
-    user_id: int = users[0]["id"]
     response = (
         client.table("user_interests")
         .select("keyword, weight")
