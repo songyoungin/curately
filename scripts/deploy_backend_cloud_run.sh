@@ -18,6 +18,7 @@ set -euo pipefail
 # - SERVICE_NAME (default: curately-backend)
 # - ARTIFACT_REPO (default: curately)
 # - IMAGE_TAG (default: latest)
+# - ENABLE_REQUIRED_APIS (default: true)
 
 required_vars=(
   GCP_PROJECT
@@ -41,15 +42,20 @@ done
 SERVICE_NAME="${SERVICE_NAME:-curately-backend}"
 ARTIFACT_REPO="${ARTIFACT_REPO:-curately}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+ENABLE_REQUIRED_APIS="${ENABLE_REQUIRED_APIS:-true}"
 
 IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT}/${ARTIFACT_REPO}/${SERVICE_NAME}:${IMAGE_TAG}"
 
-echo "Enabling required Google Cloud APIs..."
-gcloud services enable \
-  run.googleapis.com \
-  cloudbuild.googleapis.com \
-  artifactregistry.googleapis.com \
-  --project "${GCP_PROJECT}"
+if [[ "${ENABLE_REQUIRED_APIS}" == "true" ]]; then
+  echo "Enabling required Google Cloud APIs..."
+  gcloud services enable \
+    run.googleapis.com \
+    cloudbuild.googleapis.com \
+    artifactregistry.googleapis.com \
+    --project "${GCP_PROJECT}"
+else
+  echo "Skipping API enable step (ENABLE_REQUIRED_APIS=${ENABLE_REQUIRED_APIS})"
+fi
 
 echo "Ensuring Artifact Registry repository exists: ${ARTIFACT_REPO}"
 if ! gcloud artifacts repositories describe "${ARTIFACT_REPO}" \

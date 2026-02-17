@@ -31,6 +31,7 @@ jobs:
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       PIPELINE_TRIGGER_TOKEN: ${{ secrets.PIPELINE_TRIGGER_TOKEN }}
       SERVICE_NAME: curately-backend
+      ENABLE_REQUIRED_APIS: "false"
     steps:
       - uses: actions/checkout@v6
 
