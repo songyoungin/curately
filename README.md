@@ -55,6 +55,10 @@ cd ..
 
 ### Configuration
 
+#### Environment Variables
+
+All environment variables are managed in a single `.env` at the project root. The frontend automatically reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the same file — no separate `frontend/.env` needed (Vite config maps them to `VITE_` variables).
+
 Copy `.env.example` to `.env` and fill in:
 
 ```env
@@ -62,9 +66,25 @@ GEMINI_API_KEY=your-gemini-api-key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_JWT_SECRET=your-jwt-secret
 ```
 
 Edit `config.yaml` to add your RSS feeds and adjust settings.
+
+#### Google OAuth Setup
+
+To enable Google sign-in, configure both Google Cloud and Supabase:
+
+1. **Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com/))
+   - Create an OAuth 2.0 client ID (Web application)
+   - Add authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`
+   - Copy the **Client ID** and **Client Secret**
+
+2. **Supabase Dashboard** ([supabase.com/dashboard](https://supabase.com/dashboard))
+   - **Authentication > Providers > Google**: Enable and paste Client ID + Secret
+   - **Settings > API**: Copy **JWT Secret** → paste into backend `.env` as `SUPABASE_JWT_SECRET`
+   - **URL Configuration > Site URL**: `http://localhost:5173`
+   - **URL Configuration > Redirect URLs**: Add `http://localhost:5173`
 
 ### Run
 
@@ -76,6 +96,23 @@ uv run uvicorn backend.main:app --reload
 cd frontend
 npm run dev
 ```
+
+### Development Mode (MSW)
+
+By default, `npm run dev` starts with [MSW](https://mswjs.io/) mocking all API endpoints. This lets you develop the frontend without a running backend.
+
+To connect to the real backend instead, set `VITE_ENABLE_MSW=false`:
+
+```bash
+# Run frontend with real backend (no mocks)
+VITE_ENABLE_MSW=false npm run dev
+```
+
+| Mode | MSW | Backend needed | Auth |
+|------|-----|---------------|------|
+| `npm run dev` (default) | On | No | Auto-login with mock user |
+| `VITE_ENABLE_MSW=false npm run dev` | Off | Yes | Real Google OAuth |
+| `npm run build` (production) | Off | Yes | Real Google OAuth |
 
 ## Project Structure
 
