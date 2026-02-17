@@ -154,9 +154,9 @@ async def _generate_and_store_detailed_summary(
     try:
         summary = await generate_detailed_summary(title, content)
         client = get_supabase_client()
-        client.table("articles").update({"detailed_summary": json.dumps(summary)}).eq(
-            "id", article_id
-        ).execute()
+        client.table("articles").update(
+            {"detailed_summary": json.dumps(summary, ensure_ascii=False)}
+        ).eq("id", article_id).execute()
         logger.info("Stored detailed summary for article %d", article_id)
     except Exception:
         logger.exception(
