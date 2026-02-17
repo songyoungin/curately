@@ -25,8 +25,7 @@ jobs:
       GCP_REGION: ${{ secrets.GCP_REGION }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       PIPELINE_TRIGGER_TOKEN: ${{ secrets.PIPELINE_TRIGGER_TOKEN }}

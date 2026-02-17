@@ -21,7 +21,7 @@ jobs:
       CF_PAGES_PROJECT: ${{ secrets.CF_PAGES_PROJECT }}
       VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v6
 
