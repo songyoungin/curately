@@ -8,7 +8,9 @@ import {
   Settings,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Today', icon: Newspaper },
@@ -20,6 +22,7 @@ const navItems = [
 
 export default function NavBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, signOut } = useAuth()
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
@@ -49,6 +52,33 @@ export default function NavBar() {
                 {label}
               </NavLink>
             ))}
+
+            {/* User info + logout */}
+            {user && (
+              <div className="flex items-center gap-2 ml-3 pl-3 border-l border-gray-200">
+                {user.picture_url ? (
+                  <img
+                    src={user.picture_url}
+                    alt={user.name || user.email}
+                    className="w-7 h-7 rounded-full"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-medium text-indigo-600">
+                    {(user.name || user.email)[0].toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm text-gray-600 max-w-[120px] truncate">
+                  {user.name || user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  aria-label="Sign out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -85,6 +115,38 @@ export default function NavBar() {
                 {label}
               </NavLink>
             ))}
+
+            {/* Mobile user info + logout */}
+            {user && (
+              <div className="border-t border-gray-200 pt-2 mt-2">
+                <div className="flex items-center gap-2 px-3 py-2">
+                  {user.picture_url ? (
+                    <img
+                      src={user.picture_url}
+                      alt={user.name || user.email}
+                      className="w-7 h-7 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-medium text-indigo-600">
+                      {(user.name || user.email)[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm text-gray-600 truncate">
+                    {user.name || user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    signOut()
+                    setMobileMenuOpen(false)
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={18} />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
