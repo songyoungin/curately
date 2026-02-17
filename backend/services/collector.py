@@ -109,7 +109,7 @@ def _parse_published_date(entry: feedparser.FeedParserDict) -> datetime | None:
     try:
         timestamp = timegm(published_parsed)
         return datetime.fromtimestamp(timestamp, tz=UTC)
-    except ValueError, OverflowError, OSError, TypeError, AttributeError:
+    except (ValueError, OverflowError, OSError, TypeError, AttributeError):  # fmt: skip
         return None
 
 

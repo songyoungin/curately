@@ -29,6 +29,7 @@ _BASE_RETRY_DELAY = 1.0
 class RewindReport(TypedDict):
     """Structured weekly rewind report returned by Gemini."""
 
+    overview: str
     hot_topics: list[str]
     trend_changes: dict[str, list[str]]
     suggestions: list[str]
@@ -60,9 +61,13 @@ If there is no previous report, return an empty list.
 3. "suggestions": A list of 2-4 recommended keywords or RSS feed topics \
 the user might want to track based on their reading patterns.
 
+4. "overview": A 2-3 sentence summary paragraph of the user's reading activity \
+this week. Highlight the dominant themes and any notable patterns.
+
 Respond ONLY with the JSON object."""
 
 _NO_ACTIVITY_REPORT = RewindReport(
+    overview="",
     hot_topics=[],
     trend_changes={"rising": [], "declining": []},
     suggestions=[],
@@ -365,7 +370,12 @@ def _parse_rewind_response(text: str) -> RewindReport:
     if not isinstance(suggestions, list):
         suggestions = []
 
+    overview = data.get("overview")
+    if not isinstance(overview, str):
+        overview = ""
+
     return RewindReport(
+        overview=overview,
         hot_topics=[str(t) for t in hot_topics],
         trend_changes={
             "rising": [str(t) for t in trend_changes["rising"]],
