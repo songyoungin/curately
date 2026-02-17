@@ -30,6 +30,7 @@ export SUPABASE_SERVICE_ROLE_KEY="..."
 export SUPABASE_JWT_SECRET="..."
 export CORS_ORIGINS="https://<your-pages-domain>"
 export PIPELINE_TRIGGER_TOKEN="$(openssl rand -hex 32)"
+export LOG_FORMAT="json"
 ```
 
 Deploy:
@@ -150,6 +151,7 @@ curl -X POST "${BACKEND_URL}/api/pipeline/run" \
 ## Notes
 
 - In Cloud Run, internal APScheduler is disabled via `ENABLE_INTERNAL_SCHEDULER=false`.
+- In Cloud Run, structured logging is enabled via `LOG_FORMAT=json`.
 - Scheduler endpoints are protected by `PIPELINE_TRIGGER_TOKEN`.
 - Update `CORS_ORIGINS` when frontend domain changes.
 - Preferred key pair is publishable/secret; keep anon/service_role only as temporary fallback and remove before 2026 H2.

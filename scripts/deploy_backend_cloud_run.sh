@@ -20,6 +20,7 @@ set -euo pipefail
 # - IMAGE_TAGS (comma-separated tags, first tag is used for Cloud Run deploy)
 # - ENABLE_REQUIRED_APIS (default: true)
 # - BUILD_STRATEGY (default: cloudbuild, options: cloudbuild|local)
+# - LOG_FORMAT (default: text, set to json for structured logging in production)
 
 required_vars=(
   GCP_PROJECT
@@ -43,6 +44,7 @@ SERVICE_NAME="${SERVICE_NAME:-curately-backend}"
 ARTIFACT_REPO="${ARTIFACT_REPO:-curately}"
 ENABLE_REQUIRED_APIS="${ENABLE_REQUIRED_APIS:-true}"
 BUILD_STRATEGY="${BUILD_STRATEGY:-cloudbuild}"
+LOG_FORMAT="${LOG_FORMAT:-text}"
 
 contains_tag() {
   local needle="$1"
@@ -126,6 +128,7 @@ echo "Deploying to Cloud Run service: ${SERVICE_NAME}"
 ENV_FILE="$(mktemp)"
 cat >"${ENV_FILE}" <<EOF
 ENV: "prod"
+LOG_FORMAT: "${LOG_FORMAT}"
 ENABLE_INTERNAL_SCHEDULER: "false"
 CORS_ORIGINS: "${CORS_ORIGINS}"
 PIPELINE_TRIGGER_TOKEN: "${PIPELINE_TRIGGER_TOKEN}"
