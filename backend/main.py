@@ -17,7 +17,7 @@ from backend.routers import (
     rewind,
 )
 from backend.scheduler import start_scheduler, stop_scheduler
-from backend.seed import seed_default_feeds, seed_default_user
+from backend.seed import seed_default_feeds
 from backend.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application startup/shutdown lifecycle."""
     try:
         client = get_supabase_client()
-        await seed_default_user(client)
         await seed_default_feeds(client)
     except Exception:
         logger.warning("Seeding skipped (DB not available)")
