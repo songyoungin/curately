@@ -16,14 +16,12 @@ const api = axios.create({
   baseURL: '/api',
 });
 
-// Request interceptor: inject auth token from Supabase session (when available)
+// Request interceptor: inject auth token from Supabase session
 api.interceptors.request.use(async (config) => {
-  if (supabase) {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
