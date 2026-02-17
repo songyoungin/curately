@@ -19,7 +19,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const body = context.payload.pull_request.body || '';
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const body = pr.body || '';
             const unchecked = (body.match(/^[ \t]*- \[ \]/gm) || []).length;
             const checked = (body.match(/^[ \t]*- \[x\]/gim) || []).length;
             const total = unchecked + checked;
