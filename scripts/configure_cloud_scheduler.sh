@@ -62,7 +62,7 @@ upsert_job() {
       --time-zone "${SCHEDULE_TIMEZONE}" \
       --uri "${uri}" \
       --http-method POST \
-      --headers "X-Pipeline-Token=${PIPELINE_TRIGGER_TOKEN}"
+      --update-headers "X-Pipeline-Token=${PIPELINE_TRIGGER_TOKEN}"
   else
     echo "Creating scheduler job: ${job_name}"
     gcloud scheduler jobs create http "${job_name}" \
