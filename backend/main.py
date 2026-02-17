@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pythonjsonlogger.json import JsonFormatter
 
 from backend.config import get_settings
 from backend.routers import (
@@ -23,13 +24,22 @@ from backend.supabase_client import get_supabase_client
 
 
 def _configure_logging() -> None:
-    """Configure root logger based on ENV setting (dev=DEBUG, prod=INFO)."""
+    """Configure root logger based on ENV and LOG_FORMAT settings."""
     settings = get_settings()
     level = logging.DEBUG if settings.env != "prod" else logging.INFO
+    if settings.log_format == "json":
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+        )
+        logging.basicConfig(level=level, handlers=[handler], force=True)
+        return
+
     logging.basicConfig(
         level=level,
         format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
         datefmt="%H:%M:%S",
+        force=True,
     )
 
 

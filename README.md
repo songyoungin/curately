@@ -71,6 +71,7 @@ SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_JWT_SECRET=your-jwt-secret
 ENV=dev  # "dev" (DEBUG logging) or "prod" (INFO logging)
+LOG_FORMAT=text  # "text" or "json" (structured logging)
 ```
 
 Edit `config.yaml` to add your RSS feeds and adjust settings.

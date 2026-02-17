@@ -30,6 +30,7 @@ jobs:
       SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       PIPELINE_TRIGGER_TOKEN: ${{ secrets.PIPELINE_TRIGGER_TOKEN }}
+      LOG_FORMAT: "json"
       SERVICE_NAME: curately-backend
       ENABLE_REQUIRED_APIS: "false"
       BUILD_STRATEGY: "local"

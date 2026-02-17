@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -64,6 +64,7 @@ class Settings(BaseSettings):
 
     # App config
     env: str = Field(default="dev")
+    log_format: Literal["text", "json"] = Field(default="text")
     enable_internal_scheduler: bool = Field(default=True)
     cors_origins: str = Field(default="http://localhost:5173")
     pipeline_trigger_token: str = Field(default="")
