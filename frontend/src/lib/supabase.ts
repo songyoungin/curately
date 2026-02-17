@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabasePublishableKey) {
   }
   console.warn(
     'Supabase env vars not set — auth will not work. ' +
-      'Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in frontend/.env',
+      'Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in the project root .env',
   );
 }
 
