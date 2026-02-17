@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchUser]);
+  }, [fetchUser, fetchMockUser]);
 
   const signIn = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
@@ -104,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
