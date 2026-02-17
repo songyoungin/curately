@@ -67,6 +67,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_JWT_SECRET=your-jwt-secret
+ENV=dev  # "dev" (DEBUG logging) or "prod" (INFO logging)
 ```
 
 Edit `config.yaml` to add your RSS feeds and adjust settings.
@@ -118,44 +119,15 @@ VITE_ENABLE_MSW=false npm run dev
 
 ```
 curately/
-├── backend/
-│   ├── main.py               # FastAPI entrypoint
-│   ├── config.py             # Settings from config.yaml + .env
-│   ├── supabase_client.py    # Supabase client initialization
-│   ├── routers/              # API route handlers
-│   │   ├── feeds.py          # Feed CRUD endpoints
-│   │   ├── articles.py       # Article listing & interactions
-│   │   ├── newsletters.py    # Newsletter date-based queries
-│   │   ├── interests.py      # User interest management
-│   │   └── rewind.py         # Weekly Rewind reports
-│   ├── services/             # Business logic
-│   │   ├── collector.py      # RSS fetch & deduplication
-│   │   ├── scorer.py         # Gemini batch relevance scoring
-│   │   ├── summarizer.py     # Korean summary generation
-│   │   ├── pipeline.py       # Daily pipeline orchestrator
-│   │   ├── interests.py      # Interest weight management
-│   │   └── rewind.py         # Weekly analysis generation
-│   └── schemas/              # Pydantic request/response models
-├── frontend/src/
-│   ├── pages/                # Today, Archive, Bookmarks, Rewind, Settings
-│   ├── components/           # ArticleCard, NavBar, TrendChart, etc.
-│   ├── hooks/                # useNewsletter, useArticleInteractions, etc.
-│   ├── mocks/                # MSW mock data & handlers for development
-│   └── api/client.ts         # Typed API client
-├── tests/                    # pytest test suite (119 tests)
-├── frontend/e2e/             # Playwright E2E tests
-├── config.yaml               # RSS feeds & app configuration
-└── docs/                     # Design, deployment, QA & security docs
+├── backend/              # FastAPI app (routers, services, schemas)
+├── frontend/src/         # React SPA (pages, components, hooks)
+├── tests/                # pytest test suite
+├── frontend/e2e/         # Playwright E2E tests
+├── config.yaml           # RSS feeds & app configuration
+└── docs/                 # Design, deployment, QA & security docs
 ```
 
-## Documentation
-
-- [Design Document](docs/plans/2026-02-13-tech-newsletter-design.md) — Full architecture, schema, API, and pipeline design
-- [Implementation Phases](docs/plans/implementation-phases.md) — Task breakdown and acceptance criteria
-- [Deployment Guide](docs/deployment.md) — Local macOS deployment steps
-- [Security Audit](docs/security-audit.md) — OWASP review and dependency scan
-- [Performance Report](docs/performance.md) — API response times and bundle analysis
-- [QA Test Report](docs/qa-test-report.md) — Integration testing results
+For detailed architecture and API design, see [`docs/`](docs/).
 
 ## License
 
