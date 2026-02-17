@@ -118,11 +118,11 @@ async def run_daily_pipeline(
     max_total = settings.pipeline.max_articles_per_newsletter
     existing_result = (
         client.table("articles")
-        .select("id", count="exact")
+        .select("id", count="exact")  # type: ignore[arg-type]
         .eq("newsletter_date", today)
         .execute()
     )
-    existing_count = existing_result.count or 0
+    existing_count: int = existing_result.count or 0
     remaining_slots = max(0, max_total - existing_count)
     logger.info(
         "Stage 4/7: Filtering articles (threshold=%.2f, max=%d, existing=%d, slots=%d)",

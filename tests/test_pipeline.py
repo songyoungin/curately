@@ -90,6 +90,9 @@ def _make_supabase_mock(
     )
 
     articles_chain = MagicMock()
+    articles_chain.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        count=0
+    )
     articles_chain.upsert.return_value.execute.return_value = MagicMock()
 
     def table_router(name: str) -> MagicMock:
