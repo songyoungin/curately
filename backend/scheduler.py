@@ -99,6 +99,11 @@ async def _run_daily_pipeline_job() -> None:
 async def _run_weekly_rewind_job() -> None:
     """Execute the weekly rewind analysis for all users."""
     logger.info("Weekly rewind job triggered")
+    await run_weekly_rewind_for_all_users()
+
+
+async def run_weekly_rewind_for_all_users() -> None:
+    """Run weekly rewind generation for every user in the database."""
     try:
         client = get_supabase_client()
         settings = get_settings()

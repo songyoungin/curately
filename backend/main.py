@@ -41,21 +41,34 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application startup/shutdown lifecycle."""
+    settings = get_settings()
+
     try:
         client = get_supabase_client()
         await seed_default_feeds(client)
     except Exception:
         logger.warning("Seeding skipped (DB not available)")
 
-    start_scheduler()
+    scheduler_started = False
+    if settings.enable_internal_scheduler:
+        start_scheduler()
+        scheduler_started = True
+    else:
+        logger.info("Internal scheduler disabled by configuration")
+
     try:
         yield
     finally:
-        stop_scheduler()
+        if scheduler_started:
+            stop_scheduler()
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+    settings = get_settings()
+    origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+    origins = [origin for origin in origins if origin]
+
     app = FastAPI(
         title="Curately",
         description="AI-curated personal tech newsletter",
@@ -65,7 +78,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
