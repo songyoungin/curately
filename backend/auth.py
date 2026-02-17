@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_current_user_id(
-    authorization: str = Header(...),
+    authorization: str | None = Header(default=None),
 ) -> int:
     """Extract and verify the JWT from the Authorization header.
 
@@ -31,6 +31,12 @@ async def get_current_user_id(
     Raises:
         HTTPException: 401 on invalid, expired, or missing token.
     """
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header required",
+        )
+
     settings = get_settings()
 
     if not settings.supabase_jwt_secret:

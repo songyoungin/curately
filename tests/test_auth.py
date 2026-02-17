@@ -169,12 +169,13 @@ def test_invalid_token_returns_401(
     assert "invalid" in response.json()["detail"].lower()
 
 
-def test_missing_auth_header_returns_422() -> None:
-    """Missing Authorization header returns 422 (FastAPI validation)."""
+def test_missing_auth_header_returns_401() -> None:
+    """Missing Authorization header returns 401."""
     app = _build_test_app()
     client = TestClient(app)
     response = client.get("/protected")
-    assert response.status_code == 422
+    assert response.status_code == 401
+    assert "authorization header required" in response.json()["detail"].lower()
 
 
 @patch("backend.auth.get_settings")
@@ -311,10 +312,10 @@ def test_auth_me_returns_user_info(
 
 
 @patch("backend.auth.get_settings")
-def test_auth_me_without_token_returns_422(
+def test_auth_me_without_token_returns_401(
     mock_get_settings: MagicMock,
 ) -> None:
-    """GET /api/auth/me without token returns 422."""
+    """GET /api/auth/me without token returns 401."""
     mock_get_settings.return_value = _make_mock_settings()
 
     from backend.main import create_app
@@ -322,4 +323,4 @@ def test_auth_me_without_token_returns_422(
     app = create_app()
     test_client = TestClient(app, raise_server_exceptions=False)
     response = test_client.get("/api/auth/me")
-    assert response.status_code == 422
+    assert response.status_code == 401
