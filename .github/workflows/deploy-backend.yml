@@ -7,6 +7,7 @@ on:
       - "backend/**"
       - "scripts/deploy_backend_cloud_run.sh"
       - "scripts/configure_cloud_scheduler.sh"
+      - "scripts/smoke_backend_post_deploy.sh"
       - "pyproject.toml"
       - "uv.lock"
       - "config.yaml"
@@ -48,11 +49,22 @@ jobs:
       - name: Deploy Cloud Run backend
         run: ./scripts/deploy_backend_cloud_run.sh
 
-      - name: Configure Cloud Scheduler jobs
+      - name: Resolve backend URL
+        id: backend_url
         run: |
           BACKEND_URL="$(gcloud run services describe "${SERVICE_NAME}" \
             --region "${GCP_REGION}" \
             --project "${GCP_PROJECT}" \
             --format 'value(status.url)')"
+          echo "url=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Run backend post-deploy smoke test
+        env:
+          BACKEND_URL: ${{ steps.backend_url.outputs.url }}
+        run: ./scripts/smoke_backend_post_deploy.sh
+
+      - name: Configure Cloud Scheduler jobs
+        run: |
+          BACKEND_URL="${{ steps.backend_url.outputs.url }}"
           export BACKEND_URL
           ./scripts/configure_cloud_scheduler.sh

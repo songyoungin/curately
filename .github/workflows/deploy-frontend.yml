@@ -6,6 +6,7 @@ on:
     paths:
       - "frontend/**"
       - "scripts/deploy_frontend_cloudflare_pages.sh"
+      - "scripts/smoke_frontend_login_post_deploy.sh"
       - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
 
@@ -45,3 +46,14 @@ jobs:
       - name: Deploy to Cloudflare Pages
         if: steps.preflight.outputs.ready == 'true'
         run: ./scripts/deploy_frontend_cloudflare_pages.sh
+
+      - name: Install Playwright browsers
+        if: steps.preflight.outputs.ready == 'true'
+        run: npx playwright install chromium --with-deps
+        working-directory: frontend
+
+      - name: Run frontend login post-deploy smoke test
+        if: steps.preflight.outputs.ready == 'true'
+        env:
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        run: ./scripts/smoke_frontend_login_post_deploy.sh
