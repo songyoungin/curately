@@ -47,22 +47,78 @@ function formatDate(dateStr: string): string {
   });
 }
 
+interface ParsedSummary {
+  background?: string;
+  takeaways?: string[];
+  keywords?: string[];
+}
+
+function tryParseJson(raw: string): ParsedSummary | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) return parsed;
+  } catch {
+    /* not JSON */
+  }
+  return null;
+}
+
 function DetailedSummarySection({
   detailedSummary,
 }: {
   detailedSummary: string;
 }) {
-  // Parse the markdown-like detailed summary into sections
+  const parsed = tryParseJson(detailedSummary);
+
+  if (parsed) {
+    return (
+      <div className="mt-4 rounded-lg bg-gray-50 p-4 space-y-3">
+        {parsed.background && (
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Background</p>
+            <p className="mt-1 text-sm text-gray-600">{parsed.background}</p>
+          </div>
+        )}
+        {parsed.takeaways && parsed.takeaways.length > 0 && (
+          <div>
+            <p className="text-sm font-semibold text-gray-700">
+              Key Takeaways
+            </p>
+            <ul className="mt-1 space-y-1">
+              {parsed.takeaways.map((item, i) => (
+                <li
+                  key={i}
+                  className="text-sm text-gray-600 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-gray-400"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {parsed.keywords && parsed.keywords.length > 0 && (
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Keywords</p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {parsed.keywords.map((kw) => (
+                <KeywordBadge key={kw} keyword={kw} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback: parse markdown-like format (used by MSW mocks)
   const sections = detailedSummary.split("\n\n").filter(Boolean);
 
   return (
     <div className="mt-4 rounded-lg bg-gray-50 p-4 space-y-3">
       {sections.map((section, index) => {
-        // Check if section starts with **Label:** pattern
         const labelMatch = section.match(/^\*\*(.+?):\*\*\s*([\s\S]*)/);
         if (labelMatch) {
           const [, label, content] = labelMatch;
-          // Check if content has bullet points
           const lines = content.split("\n").filter(Boolean);
           const hasBullets = lines.some((line) => line.startsWith("- "));
 

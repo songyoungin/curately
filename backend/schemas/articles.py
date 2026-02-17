@@ -18,6 +18,7 @@ class ArticleListItem(BaseModel):
     relevance_score: float | None = None
     categories: list[str] = []
     keywords: list[str] = []
+    detailed_summary: str | None = None
     newsletter_date: date | None = None
     is_liked: bool = False
     is_bookmarked: bool = False

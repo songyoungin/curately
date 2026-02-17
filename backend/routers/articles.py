@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/articles", tags=["articles"])
 
 _ARTICLE_LIST_COLUMNS = (
     "id, source_feed, source_url, title, author, published_at, "
-    "summary, relevance_score, categories, keywords, newsletter_date"
+    "summary, detailed_summary, relevance_score, categories, keywords, newsletter_date"
 )
 
 

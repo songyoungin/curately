@@ -36,6 +36,22 @@ def _get_default_user_id() -> int:
     return cast(int, row["id"])
 
 
+@router.get("", response_model=list[RewindReportResponse])
+async def list_rewind_reports() -> list[dict[str, Any]]:
+    """Return all rewind reports for the default user, newest first."""
+    client = get_supabase_client()
+    user_id = _get_default_user_id()
+
+    result = (
+        client.table("rewind_reports")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("period_end", desc=True)
+        .execute()
+    )
+    return cast(list[dict[str, Any]], result.data)
+
+
 @router.get("/latest", response_model=RewindReportResponse)
 async def get_latest_rewind() -> dict[str, Any]:
     """Return the most recent rewind report for the default user.

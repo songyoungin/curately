@@ -115,15 +115,26 @@ async def run_daily_pipeline(
     logger.info("Scored %d article(s)", articles_scored)
 
     # Stage 4: Filter articles
+    max_total = settings.pipeline.max_articles_per_newsletter
+    existing_result = (
+        client.table("articles")
+        .select("id", count="exact")
+        .eq("newsletter_date", today)
+        .execute()
+    )
+    existing_count = existing_result.count or 0
+    remaining_slots = max(0, max_total - existing_count)
     logger.info(
-        "Stage 4/7: Filtering articles (threshold=%.2f, max=%d)",
+        "Stage 4/7: Filtering articles (threshold=%.2f, max=%d, existing=%d, slots=%d)",
         settings.pipeline.relevance_threshold,
-        settings.pipeline.max_articles_per_newsletter,
+        max_total,
+        existing_count,
+        remaining_slots,
     )
     filtered = _filter_articles(
         articles,
         threshold=settings.pipeline.relevance_threshold,
-        max_count=settings.pipeline.max_articles_per_newsletter,
+        max_count=remaining_slots,
     )
     logger.info("Filtered to %d article(s)", len(filtered))
 
