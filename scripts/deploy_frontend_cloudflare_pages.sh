@@ -8,7 +8,7 @@ set -euo pipefail
 # - CF_PAGES_PROJECT
 # - VITE_API_BASE_URL (example: https://curately-backend-abc.run.app/api)
 # - VITE_SUPABASE_URL
-# - VITE_SUPABASE_ANON_KEY
+# - VITE_SUPABASE_PUBLISHABLE_KEY
 #
 # Optional environment variables:
 # - CF_PAGES_BRANCH (default: main)
@@ -18,7 +18,7 @@ required_vars=(
   CF_PAGES_PROJECT
   VITE_API_BASE_URL
   VITE_SUPABASE_URL
-  VITE_SUPABASE_ANON_KEY
+  VITE_SUPABASE_PUBLISHABLE_KEY
 )
 
 for var_name in "${required_vars[@]}"; do
@@ -37,7 +37,7 @@ npm ci
 echo "Building frontend..."
 VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
 VITE_SUPABASE_URL="${VITE_SUPABASE_URL}" \
-VITE_SUPABASE_ANON_KEY="${VITE_SUPABASE_ANON_KEY}" \
+VITE_SUPABASE_PUBLISHABLE_KEY="${VITE_SUPABASE_PUBLISHABLE_KEY}" \
 npm run build
 popd >/dev/null
 
