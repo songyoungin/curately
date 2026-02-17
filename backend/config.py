@@ -71,9 +71,7 @@ class Settings(BaseSettings):
     # Secrets from .env
     gemini_api_key: str = Field(default="")
     supabase_url: str = Field(default="")
-    supabase_publishable_key: str = Field(default="")
     supabase_anon_key: str = Field(default="")
-    supabase_secret_key: str = Field(default="")
     supabase_service_role_key: str = Field(default="")
     supabase_jwt_secret: str = Field(default="")
 
@@ -94,16 +92,6 @@ class Settings(BaseSettings):
         yaml_data = _load_yaml_config()
         merged = {**yaml_data, **kwargs}
         super().__init__(**merged)
-
-    @property
-    def effective_supabase_publishable_key(self) -> str:
-        """Return publishable key, falling back to legacy anon key."""
-        return self.supabase_publishable_key or self.supabase_anon_key
-
-    @property
-    def effective_supabase_secret_key(self) -> str:
-        """Return secret key, falling back to legacy service role key."""
-        return self.supabase_secret_key or self.supabase_service_role_key
 
 
 def _load_yaml_config() -> dict[str, Any]:
