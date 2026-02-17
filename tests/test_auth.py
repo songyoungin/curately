@@ -212,3 +212,114 @@ def test_token_missing_email_returns_401(
     response = client.get("/protected", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
     assert "email" in response.json()["detail"].lower()
+
+
+# --- /api/auth/me endpoint tests ---
+
+FULL_USER_ROW: dict[str, Any] = {
+    "id": 42,
+    "email": "test@example.com",
+    "name": "test",
+    "google_sub": "google-sub-123",
+    "picture_url": None,
+    "created_at": "2026-02-17T00:00:00+00:00",
+    "last_login_at": "2026-02-17T01:00:00+00:00",
+}
+
+
+def _make_mock_client_for_me(
+    *,
+    auth_user: dict[str, Any] | None = None,
+    full_user: dict[str, Any] | None = None,
+) -> MagicMock:
+    """Build mock client for both auth upsert and /me user fetch."""
+    mock_client = MagicMock()
+    call_count = {"users_select": 0}
+
+    def table_router(table_name: str) -> MagicMock:
+        mock_table = MagicMock()
+        if table_name == "users":
+
+            def select_fn(*args: Any, **kwargs: Any) -> MagicMock:
+                call_count["users_select"] += 1
+                mock_chain = MagicMock()
+                if call_count["users_select"] == 1:
+                    # First call: auth.py _upsert_user lookup by email
+                    mock_chain.eq.return_value = MagicMock(
+                        execute=MagicMock(
+                            return_value=MagicMock(
+                                data=[auth_user] if auth_user else []
+                            )
+                        )
+                    )
+                else:
+                    # Second call: router get_me lookup by id
+                    mock_chain.eq.return_value = MagicMock(
+                        execute=MagicMock(
+                            return_value=MagicMock(
+                                data=[full_user] if full_user else []
+                            )
+                        )
+                    )
+                return mock_chain
+
+            mock_table.select = select_fn
+
+            # update chain for upsert
+            update_chain = MagicMock()
+            update_chain.eq = MagicMock(
+                return_value=MagicMock(
+                    execute=MagicMock(return_value=MagicMock(data=[auth_user or {}]))
+                )
+            )
+            mock_table.update = MagicMock(return_value=update_chain)
+
+        return mock_table
+
+    mock_client.table = table_router
+    return mock_client
+
+
+@patch("backend.auth.get_settings")
+@patch("backend.routers.auth.get_supabase_client")
+@patch("backend.auth.get_supabase_client")
+def test_auth_me_returns_user_info(
+    mock_auth_client: MagicMock,
+    mock_router_client: MagicMock,
+    mock_get_settings: MagicMock,
+) -> None:
+    """GET /api/auth/me returns the full user row for authenticated user."""
+    mock_get_settings.return_value = _make_mock_settings()
+    shared_client = _make_mock_client_for_me(
+        auth_user=MOCK_USER_ROW, full_user=FULL_USER_ROW
+    )
+    mock_auth_client.return_value = shared_client
+    mock_router_client.return_value = shared_client
+
+    from backend.main import create_app
+
+    app = create_app()
+    test_client = TestClient(app, raise_server_exceptions=False)
+    token = _make_token()
+    response = test_client.get(
+        "/api/auth/me", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == 42
+    assert data["email"] == "test@example.com"
+
+
+@patch("backend.auth.get_settings")
+def test_auth_me_without_token_returns_422(
+    mock_get_settings: MagicMock,
+) -> None:
+    """GET /api/auth/me without token returns 422."""
+    mock_get_settings.return_value = _make_mock_settings()
+
+    from backend.main import create_app
+
+    app = create_app()
+    test_client = TestClient(app, raise_server_exceptions=False)
+    response = test_client.get("/api/auth/me")
+    assert response.status_code == 422
