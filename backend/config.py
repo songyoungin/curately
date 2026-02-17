@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     supabase_url: str = Field(default="")
     supabase_anon_key: str = Field(default="")
     supabase_service_role_key: str = Field(default="")
+    supabase_jwt_secret: str = Field(default="")
 
     # YAML-sourced config (populated via model_validator)
     feeds: list[FeedConfig] = Field(default_factory=list)
