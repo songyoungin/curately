@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
 import NavBar from './components/NavBar'
 import Today from './pages/Today'
 import Archive from './pages/Archive'
@@ -31,7 +32,9 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppLayout />
+      <AuthProvider>
+        <AppLayout />
+      </AuthProvider>
     </BrowserRouter>
   )
 }
