@@ -57,16 +57,13 @@ cd ..
 
 #### Environment Variables
 
-All environment variables are managed in a single `.env` at the project root. The frontend automatically reads `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` from the same file — no separate `frontend/.env` needed (Vite config maps them to `VITE_` variables).
+All environment variables are managed in a single `.env` at the project root. The frontend automatically reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the same file — no separate `frontend/.env` needed (Vite config maps them to `VITE_` variables).
 
 Copy `.env.example` to `.env` and fill in:
 
 ```env
 GEMINI_API_KEY=your-gemini-api-key
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-SUPABASE_SECRET_KEY=your-secret-key
-# Legacy fallback (supported during migration window only)
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_JWT_SECRET=your-jwt-secret
@@ -87,16 +84,8 @@ To enable Google sign-in, configure both Google Cloud and Supabase:
 2. **Supabase Dashboard** ([supabase.com/dashboard](https://supabase.com/dashboard))
    - **Authentication > Providers > Google**: Enable and paste Client ID + Secret
    - **Settings > API**: Copy **JWT Secret** → paste into backend `.env` as `SUPABASE_JWT_SECRET`
-   - **Settings > API Keys**: Prefer **Publishable key** + **Secret key** for new setups
    - **URL Configuration > Site URL**: `http://localhost:5173`
    - **URL Configuration > Redirect URLs**: Add `http://localhost:5173`
-
-#### Supabase API Key Migration Policy
-
-- Preferred key pair: `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`
-- Legacy fallback still supported: `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`
-- Planned legacy removal target: 2026 H2
-- Rollback: if new keys fail in production, temporarily set legacy keys and redeploy while investigating key scope/configuration
 
 ### Run
 
