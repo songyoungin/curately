@@ -12,6 +12,7 @@ set -euo pipefail
 # - SUPABASE_SERVICE_ROLE_KEY
 # - SUPABASE_JWT_SECRET
 # - CORS_ORIGINS (comma-separated list, example: https://curately.pages.dev)
+# - PIPELINE_TRIGGER_TOKEN
 #
 # Optional environment variables:
 # - SERVICE_NAME (default: curately-backend)
@@ -27,6 +28,7 @@ required_vars=(
   SUPABASE_SERVICE_ROLE_KEY
   SUPABASE_JWT_SECRET
   CORS_ORIGINS
+  PIPELINE_TRIGGER_TOKEN
 )
 
 for var_name in "${required_vars[@]}"; do
@@ -61,13 +63,26 @@ if ! gcloud artifacts repositories describe "${ARTIFACT_REPO}" \
 fi
 
 echo "Building backend image: ${IMAGE_URI}"
-gcloud builds submit \
-  --tag "${IMAGE_URI}" \
-  --file backend/Dockerfile \
-  --project "${GCP_PROJECT}" \
-  .
+TEMP_DOCKERFILE="./Dockerfile"
+cp backend/Dockerfile "${TEMP_DOCKERFILE}"
+trap 'rm -f "${TEMP_DOCKERFILE}"' EXIT
+
+gcloud builds submit --tag "${IMAGE_URI}" --project "${GCP_PROJECT}" .
 
 echo "Deploying to Cloud Run service: ${SERVICE_NAME}"
+ENV_FILE="$(mktemp)"
+cat >"${ENV_FILE}" <<EOF
+ENV: "prod"
+ENABLE_INTERNAL_SCHEDULER: "false"
+CORS_ORIGINS: "${CORS_ORIGINS}"
+PIPELINE_TRIGGER_TOKEN: "${PIPELINE_TRIGGER_TOKEN}"
+GEMINI_API_KEY: "${GEMINI_API_KEY}"
+SUPABASE_URL: "${SUPABASE_URL}"
+SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
+SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+SUPABASE_JWT_SECRET: "${SUPABASE_JWT_SECRET}"
+EOF
+
 gcloud run deploy "${SERVICE_NAME}" \
   --project "${GCP_PROJECT}" \
   --region "${GCP_REGION}" \
@@ -79,7 +94,9 @@ gcloud run deploy "${SERVICE_NAME}" \
   --memory 512Mi \
   --min-instances 0 \
   --max-instances 2 \
-  --set-env-vars "ENV=prod,ENABLE_INTERNAL_SCHEDULER=false,CORS_ORIGINS=${CORS_ORIGINS},GEMINI_API_KEY=${GEMINI_API_KEY},SUPABASE_URL=${SUPABASE_URL},SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY},SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY},SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}"
+  --env-vars-file "${ENV_FILE}"
+
+rm -f "${ENV_FILE}"
 
 SERVICE_URL="$(gcloud run services describe "${SERVICE_NAME}" \
   --region "${GCP_REGION}" \

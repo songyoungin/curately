@@ -1,0 +1,56 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "scripts/deploy_backend_cloud_run.sh"
+      - "scripts/configure_cloud_scheduler.sh"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "config.yaml"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      PIPELINE_TRIGGER_TOKEN: ${{ secrets.PIPELINE_TRIGGER_TOKEN }}
+      SERVICE_NAME: curately-backend
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy Cloud Run backend
+        run: ./scripts/deploy_backend_cloud_run.sh
+
+      - name: Configure Cloud Scheduler jobs
+        run: |
+          BACKEND_URL="$(gcloud run services describe "${SERVICE_NAME}" \
+            --region "${GCP_REGION}" \
+            --project "${GCP_PROJECT}" \
+            --format 'value(status.url)')"
+          export BACKEND_URL
+          ./scripts/configure_cloud_scheduler.sh
