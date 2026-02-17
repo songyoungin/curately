@@ -22,6 +22,9 @@ export GCP_PROJECT="your-gcp-project-id"
 export GCP_REGION="us-central1"
 export GEMINI_API_KEY="..."
 export SUPABASE_URL="https://<project>.supabase.co"
+export SUPABASE_PUBLISHABLE_KEY="..."
+export SUPABASE_SECRET_KEY="..."
+# Legacy fallback (migration window only)
 export SUPABASE_ANON_KEY="..."
 export SUPABASE_SERVICE_ROLE_KEY="..."
 export SUPABASE_JWT_SECRET="..."
@@ -72,6 +75,8 @@ export CLOUDFLARE_ACCOUNT_ID="..."
 export CF_PAGES_PROJECT="curately-frontend"
 export VITE_API_BASE_URL="${BACKEND_URL}/api"
 export VITE_SUPABASE_URL="${SUPABASE_URL}"
+export VITE_SUPABASE_PUBLISHABLE_KEY="${SUPABASE_PUBLISHABLE_KEY}"
+# Legacy fallback (migration window only)
 export VITE_SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
 ```
 
@@ -98,3 +103,4 @@ curl -X POST "${BACKEND_URL}/api/pipeline/run" \
 - In Cloud Run, internal APScheduler is disabled via `ENABLE_INTERNAL_SCHEDULER=false`.
 - Scheduler endpoints are protected by `PIPELINE_TRIGGER_TOKEN`.
 - Update `CORS_ORIGINS` when frontend domain changes.
+- Preferred key pair is publishable/secret; keep anon/service_role only as temporary fallback and remove before 2026 H2.
