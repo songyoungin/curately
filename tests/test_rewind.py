@@ -55,6 +55,7 @@ SAMPLE_PREVIOUS_REPORT = {
 
 GEMINI_RESPONSE_JSON = json.dumps(
     {
+        "overview": "LLM agents and Kubernetes security dominated this week's reading.",
         "hot_topics": ["LLM Agents", "Kubernetes Security"],
         "trend_changes": {
             "rising": ["LLM Agents", "Kubernetes Security"],
@@ -346,6 +347,7 @@ async def test_persist_rewind_report_stores_correctly() -> None:
     Expects: Returned ID matches, insert called with correct data.
     """
     report: RewindReport = {
+        "overview": "LLM agents were the focus this week.",
         "hot_topics": ["LLM Agents"],
         "trend_changes": {"rising": ["LLM Agents"], "declining": []},
         "suggestions": ["MLOps"],
@@ -485,6 +487,7 @@ def test_post_generate_rewind_creates_report(
     mock_dt.now.return_value = mock_now
 
     mock_generate.return_value = {
+        "overview": "LLM agents were the focus this week.",
         "hot_topics": ["LLM Agents"],
         "trend_changes": {"rising": ["LLM Agents"], "declining": []},
         "suggestions": ["MLOps"],
