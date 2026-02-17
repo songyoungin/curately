@@ -11,4 +11,4 @@ from backend.config import get_settings
 def get_supabase_client() -> Client:
     """Return a cached Supabase client using service role key."""
     settings = get_settings()
-    return create_client(settings.supabase_url, settings.supabase_service_role_key)
+    return create_client(settings.supabase_url, settings.effective_supabase_secret_key)
