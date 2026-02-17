@@ -4,12 +4,12 @@ import json
 import logging
 from typing import Any, cast
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
+from backend.auth import get_current_user_id
 from backend.config import get_settings
 from backend.schemas.articles import ArticleDetail, ArticleListItem
 from backend.schemas.interactions import InteractionResponse
-from backend.seed import DEFAULT_USER_EMAIL
 from backend.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -20,28 +20,6 @@ _ARTICLE_LIST_COLUMNS = (
     "id, source_feed, source_url, title, author, published_at, "
     "summary, detailed_summary, relevance_score, categories, keywords, newsletter_date"
 )
-
-
-def _get_default_user_id() -> int:
-    """Fetch the default MVP user's ID from the database.
-
-    Returns:
-        The user ID for the default user.
-
-    Raises:
-        HTTPException: If the default user is not found.
-    """
-    client = get_supabase_client()
-    result = (
-        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
-    )
-    if not result.data:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Default user not found",
-        )
-    row = cast(dict[str, Any], result.data[0])
-    return cast(int, row["id"])
 
 
 def _attach_interaction_flags(
@@ -86,10 +64,11 @@ def _attach_interaction_flags(
 
 
 @router.get("/bookmarked", response_model=list[ArticleListItem])
-async def list_bookmarked_articles() -> list[dict[str, Any]]:
-    """Return all bookmarked articles for the default user."""
+async def list_bookmarked_articles(
+    user_id: int = Depends(get_current_user_id),
+) -> list[dict[str, Any]]:
+    """Return all bookmarked articles for the authenticated user."""
     client = get_supabase_client()
-    user_id = _get_default_user_id()
 
     # Fetch bookmark interaction article IDs
     bookmark_result = (
@@ -165,11 +144,15 @@ async def _generate_and_store_detailed_summary(
 
 
 @router.post("/{article_id}/like", response_model=InteractionResponse)
-async def toggle_like(article_id: int) -> dict[str, Any]:
+async def toggle_like(
+    article_id: int,
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
     """Toggle a like interaction on an article.
 
     Args:
         article_id: The article to like/unlike.
+        user_id: Injected by the JWT auth dependency.
 
     Raises:
         HTTPException: 404 if article not found.
@@ -181,7 +164,6 @@ async def toggle_like(article_id: int) -> dict[str, Any]:
 
     client = get_supabase_client()
     _assert_article_exists(client, article_id)
-    user_id = _get_default_user_id()
     settings = get_settings()
 
     # Check if like already exists
@@ -224,7 +206,9 @@ async def toggle_like(article_id: int) -> dict[str, Any]:
 
 @router.post("/{article_id}/bookmark", response_model=InteractionResponse)
 async def toggle_bookmark(
-    article_id: int, background_tasks: BackgroundTasks
+    article_id: int,
+    background_tasks: BackgroundTasks,
+    user_id: int = Depends(get_current_user_id),
 ) -> dict[str, Any]:
     """Toggle a bookmark interaction on an article.
 
@@ -233,13 +217,13 @@ async def toggle_bookmark(
     Args:
         article_id: The article to bookmark/unbookmark.
         background_tasks: FastAPI background task runner.
+        user_id: Injected by the JWT auth dependency.
 
     Raises:
         HTTPException: 404 if article not found.
     """
     client = get_supabase_client()
     article = _assert_article_exists(client, article_id)
-    user_id = _get_default_user_id()
 
     # Check if bookmark already exists
     existing = (
@@ -286,11 +270,15 @@ async def toggle_bookmark(
 
 
 @router.get("/{article_id}", response_model=ArticleDetail)
-async def get_article(article_id: int) -> dict[str, Any]:
+async def get_article(
+    article_id: int,
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
     """Return full article detail with interaction flags.
 
     Args:
         article_id: The ID of the article to retrieve.
+        user_id: Injected by the JWT auth dependency.
 
     Raises:
         HTTPException: 404 if article not found.
@@ -306,7 +294,6 @@ async def get_article(article_id: int) -> dict[str, Any]:
         )
 
     article = rows[0]
-    user_id = _get_default_user_id()
 
     interactions_result = (
         client.table("interactions")

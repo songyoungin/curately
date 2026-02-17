@@ -16,14 +16,12 @@ const api = axios.create({
   baseURL: '/api',
 });
 
-// Request interceptor: inject auth token from Supabase session (when available)
+// Request interceptor: inject auth token from Supabase session
 api.interceptors.request.use(async (config) => {
-  if (supabase) {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -33,8 +31,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      // Future: redirect to login or refresh token
-      console.error('Unauthorized request — session may have expired');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   },

@@ -13,7 +13,6 @@ from typing import Any, cast
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from backend.config import get_settings
-from backend.seed import DEFAULT_USER_EMAIL
 from backend.services.pipeline import run_daily_pipeline
 from backend.services.rewind import generate_rewind_report, persist_rewind_report
 from backend.supabase_client import get_supabase_client
@@ -98,48 +97,48 @@ async def _run_daily_pipeline_job() -> None:
 
 
 async def _run_weekly_rewind_job() -> None:
-    """Execute the weekly rewind analysis for the default user."""
+    """Execute the weekly rewind analysis for all users."""
     logger.info("Weekly rewind job triggered")
     try:
         client = get_supabase_client()
         settings = get_settings()
 
-        # Resolve default user ID
-        user_id = _get_default_user_id(client)
-        if user_id is None:
-            logger.warning("Default user not found, skipping rewind")
+        users = _get_all_users(client)
+        if not users:
+            logger.warning("No users found, skipping rewind")
             return
 
         period_end = date.today()
         period_start = period_end - timedelta(days=7)
 
-        report = await generate_rewind_report(client, user_id, settings)
-        report_id = await persist_rewind_report(
-            client, user_id, report, period_start, period_end
-        )
-        logger.info(
-            "Weekly rewind complete: report_id=%d, period=%s to %s",
-            report_id,
-            period_start,
-            period_end,
-        )
+        for user in users:
+            user_id = int(user["id"])
+            try:
+                report = await generate_rewind_report(client, user_id, settings)
+                report_id = await persist_rewind_report(
+                    client, user_id, report, period_start, period_end
+                )
+                logger.info(
+                    "Weekly rewind complete: user_id=%d, report_id=%d, period=%s to %s",
+                    user_id,
+                    report_id,
+                    period_start,
+                    period_end,
+                )
+            except Exception:
+                logger.exception("Rewind failed for user_id=%d", user_id)
     except Exception:
         logger.exception("Weekly rewind job failed")
 
 
-def _get_default_user_id(client: Any) -> int | None:
-    """Look up the default MVP user's ID.
+def _get_all_users(client: Any) -> list[dict[str, Any]]:
+    """Fetch all user IDs from the database.
 
     Args:
         client: Supabase client instance.
 
     Returns:
-        User ID or None if the default user does not exist.
+        List of user rows with at least an 'id' field.
     """
-    response = (
-        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
-    )
-    rows = cast(list[dict[str, Any]], response.data)
-    if not rows:
-        return None
-    return int(rows[0]["id"])
+    response = client.table("users").select("id").execute()
+    return cast(list[dict[str, Any]], response.data)

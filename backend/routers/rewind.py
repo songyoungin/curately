@@ -4,43 +4,22 @@ from datetime import timedelta, timezone
 from datetime import datetime as dt
 from typing import Any, cast
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from backend.auth import get_current_user_id
 from backend.schemas.rewind import RewindReportResponse
-from backend.seed import DEFAULT_USER_EMAIL
 from backend.services.rewind import generate_rewind_report, persist_rewind_report
 from backend.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/rewind", tags=["rewind"])
 
 
-def _get_default_user_id() -> int:
-    """Fetch the default MVP user's ID from the database.
-
-    Returns:
-        The user ID for the default user.
-
-    Raises:
-        HTTPException: If the default user is not found.
-    """
-    client = get_supabase_client()
-    result = (
-        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
-    )
-    if not result.data:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Default user not found",
-        )
-    row = cast(dict[str, Any], result.data[0])
-    return cast(int, row["id"])
-
-
 @router.get("", response_model=list[RewindReportResponse])
-async def list_rewind_reports() -> list[dict[str, Any]]:
-    """Return all rewind reports for the default user, newest first."""
+async def list_rewind_reports(
+    user_id: int = Depends(get_current_user_id),
+) -> list[dict[str, Any]]:
+    """Return all rewind reports for the authenticated user, newest first."""
     client = get_supabase_client()
-    user_id = _get_default_user_id()
 
     result = (
         client.table("rewind_reports")
@@ -53,14 +32,15 @@ async def list_rewind_reports() -> list[dict[str, Any]]:
 
 
 @router.get("/latest", response_model=RewindReportResponse)
-async def get_latest_rewind() -> dict[str, Any]:
-    """Return the most recent rewind report for the default user.
+async def get_latest_rewind(
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Return the most recent rewind report for the authenticated user.
 
     Raises:
         HTTPException: 404 if no reports exist.
     """
     client = get_supabase_client()
-    user_id = _get_default_user_id()
 
     result = (
         client.table("rewind_reports")
@@ -106,7 +86,9 @@ async def get_rewind_by_id(report_id: int) -> dict[str, Any]:
 
 
 @router.post("/generate", response_model=RewindReportResponse, status_code=201)
-async def generate_rewind() -> dict[str, Any]:
+async def generate_rewind(
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
     """Trigger generation of a new weekly rewind report.
 
     Calculates the period as the last 7 days and generates a comparative
@@ -116,7 +98,6 @@ async def generate_rewind() -> dict[str, Any]:
         The newly created rewind report.
     """
     client = get_supabase_client()
-    user_id = _get_default_user_id()
 
     today = dt.now(timezone.utc).date()
     period_start = today - timedelta(days=7)
