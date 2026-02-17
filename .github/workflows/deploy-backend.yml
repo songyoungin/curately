@@ -32,6 +32,7 @@ jobs:
       PIPELINE_TRIGGER_TOKEN: ${{ secrets.PIPELINE_TRIGGER_TOKEN }}
       SERVICE_NAME: curately-backend
       ENABLE_REQUIRED_APIS: "false"
+      BUILD_STRATEGY: "local"
     steps:
       - uses: actions/checkout@v6
 

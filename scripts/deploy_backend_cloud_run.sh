@@ -19,6 +19,7 @@ set -euo pipefail
 # - ARTIFACT_REPO (default: curately)
 # - IMAGE_TAG (default: latest)
 # - ENABLE_REQUIRED_APIS (default: true)
+# - BUILD_STRATEGY (default: cloudbuild, options: cloudbuild|local)
 
 required_vars=(
   GCP_PROJECT
@@ -43,6 +44,7 @@ SERVICE_NAME="${SERVICE_NAME:-curately-backend}"
 ARTIFACT_REPO="${ARTIFACT_REPO:-curately}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 ENABLE_REQUIRED_APIS="${ENABLE_REQUIRED_APIS:-true}"
+BUILD_STRATEGY="${BUILD_STRATEGY:-cloudbuild}"
 
 IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT}/${ARTIFACT_REPO}/${SERVICE_NAME}:${IMAGE_TAG}"
 
@@ -69,11 +71,16 @@ if ! gcloud artifacts repositories describe "${ARTIFACT_REPO}" \
 fi
 
 echo "Building backend image: ${IMAGE_URI}"
-TEMP_DOCKERFILE="./Dockerfile"
-cp backend/Dockerfile "${TEMP_DOCKERFILE}"
-trap 'rm -f "${TEMP_DOCKERFILE}"' EXIT
-
-gcloud builds submit --tag "${IMAGE_URI}" --project "${GCP_PROJECT}" .
+if [[ "${BUILD_STRATEGY}" == "local" ]]; then
+  gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+  docker build -f backend/Dockerfile -t "${IMAGE_URI}" .
+  docker push "${IMAGE_URI}"
+else
+  TEMP_DOCKERFILE="./Dockerfile"
+  cp backend/Dockerfile "${TEMP_DOCKERFILE}"
+  trap 'rm -f "${TEMP_DOCKERFILE}"' EXIT
+  gcloud builds submit --tag "${IMAGE_URI}" --project "${GCP_PROJECT}" .
+fi
 
 echo "Deploying to Cloud Run service: ${SERVICE_NAME}"
 ENV_FILE="$(mktemp)"
