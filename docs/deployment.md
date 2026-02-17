@@ -38,11 +38,21 @@ Create `.env` in the project root:
 ```env
 GEMINI_API_KEY=your-gemini-api-key
 SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_SECRET_KEY=your-secret-key
+# Legacy fallback (migration window only)
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 Edit `config.yaml` to configure RSS feeds and schedule settings.
+
+### Supabase Key Migration Notes
+
+- Primary runtime keys: `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
+- Legacy fallback keys: `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Target to fully remove legacy keys before 2026 H2
+- Rollback: re-apply legacy keys and restart services if publishable/secret key permissions are misconfigured
 
 ### 3. Database Schema
 
@@ -144,6 +154,7 @@ uv run uvicorn backend.main:app --reload
 1. Verify `.env` values are correct
 2. Check Supabase project is running (not paused)
 3. Ensure `SUPABASE_SERVICE_ROLE_KEY` has admin access
+4. If using `SUPABASE_SECRET_KEY`, verify it has equivalent privileges required by backend writes
 
 ### Pre-commit hooks fail
 
