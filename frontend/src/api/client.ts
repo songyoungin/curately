@@ -31,8 +31,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      // Future: redirect to login or refresh token
-      console.error('Unauthorized request — session may have expired');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   },
