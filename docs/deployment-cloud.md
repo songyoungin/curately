@@ -86,9 +86,58 @@ Deploy:
 ./scripts/deploy_frontend_cloudflare_pages.sh
 ```
 
-## 5) Verify
+## 5) Post-Deploy Smoke Tests
 
-- Backend health: `GET ${BACKEND_URL}/api/health`
+GitHub Actions runs smoke tests immediately after a successful deploy.
+
+- Backend workflow: `.github/workflows/deploy-backend.yml`
+  - Runs `scripts/smoke_backend_post_deploy.sh`
+  - Verifies `GET /api/health`, `GET /api/feeds`, `GET /api/newsletters?limit=1`
+- Frontend workflow: `.github/workflows/deploy-frontend.yml`
+  - Runs `scripts/smoke_frontend_login_post_deploy.sh`
+  - Verifies `/login` load, `Sign in with Google` button visibility, and OAuth redirect URL shape
+- If any smoke check fails, the workflow fails.
+
+### Manual Smoke Commands
+
+Run backend smoke manually:
+
+```bash
+BACKEND_URL="https://<your-cloud-run-url>" ./scripts/smoke_backend_post_deploy.sh
+```
+
+Run frontend login smoke manually:
+
+```bash
+FRONTEND_URL="https://<your-pages-domain>" ./scripts/smoke_frontend_login_post_deploy.sh
+```
+
+If `FRONTEND_URL` is not provided, the script falls back to `https://<CF_PAGES_PROJECT>.pages.dev`.
+
+### Manual Workflow Dispatch
+
+Trigger backend deploy + smoke:
+
+```bash
+gh workflow run deploy-backend.yml --ref <branch-or-main>
+```
+
+Trigger frontend deploy + smoke:
+
+```bash
+gh workflow run deploy-frontend.yml --ref <branch-or-main>
+```
+
+Check recent runs:
+
+```bash
+gh run list --workflow deploy-backend.yml --limit 5
+gh run list --workflow deploy-frontend.yml --limit 5
+```
+
+## 6) Additional Verification
+
+- Backend health quick check: `GET ${BACKEND_URL}/api/health`
 - Daily pipeline manual trigger:
 
 ```bash
