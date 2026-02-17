@@ -62,6 +62,9 @@ class GeminiConfig(BaseModel):
 class Settings(BaseSettings):
     """Application settings combining .env secrets and config.yaml values."""
 
+    # App config
+    env: str = Field(default="dev")
+
     # Secrets from .env
     gemini_api_key: str = Field(default="")
     supabase_url: str = Field(default="")

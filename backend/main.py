@@ -1,12 +1,13 @@
 """Curately FastAPI application entrypoint."""
 
 import logging
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.config import get_settings
 from backend.routers import (
     articles,
     auth,
@@ -19,6 +20,20 @@ from backend.routers import (
 from backend.scheduler import start_scheduler, stop_scheduler
 from backend.seed import seed_default_feeds
 from backend.supabase_client import get_supabase_client
+
+
+def _configure_logging() -> None:
+    """Configure root logger based on ENV setting (dev=DEBUG, prod=INFO)."""
+    settings = get_settings()
+    level = logging.DEBUG if settings.env != "prod" else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+
+_configure_logging()
 
 logger = logging.getLogger(__name__)
 
