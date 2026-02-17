@@ -128,6 +128,7 @@ curately/
 ```
 
 For detailed architecture and API design, see [`docs/`](docs/).
+For low-cost cloud deployment, see [`docs/deployment-cloud.md`](docs/deployment-cloud.md).
 
 ## License
 
