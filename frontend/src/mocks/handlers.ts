@@ -5,9 +5,15 @@ import {
   mockFeeds,
   mockInterests,
   mockRewindReports,
+  mockUser,
 } from './data';
 
 export const handlers = [
+  // GET /api/auth/me
+  http.get('/api/auth/me', () => {
+    return HttpResponse.json(mockUser);
+  }),
+
   // GET /api/newsletters/today
   http.get('/api/newsletters/today', () => {
     const today = '2026-02-16';

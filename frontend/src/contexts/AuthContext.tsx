@@ -41,12 +41,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const fetchMockUser = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const data: User = await response.json();
+        setUser(data);
+      }
+    } catch {
+      // Mock user not available
+    }
+  }, []);
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       if (initialSession?.access_token) {
         fetchUser(initialSession.access_token).finally(() => setLoading(false));
+      } else if (import.meta.env.DEV) {
+        // In dev mode with MSW, auto-login with mock user
+        fetchMockUser().finally(() => setLoading(false));
       } else {
         setLoading(false);
       }

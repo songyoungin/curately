@@ -3,6 +3,17 @@ import type { Feed } from '../types/feed';
 import type { UserInterest } from '../types/interest';
 import type { NewsletterEdition } from '../types/newsletter';
 import type { RewindReport } from '../types/rewind';
+import type { User } from '../types/user';
+
+export const mockUser: User = {
+  id: 1,
+  email: 'dev@curately.local',
+  name: 'Dev User',
+  picture_url: null,
+  google_sub: null,
+  created_at: '2026-02-01T00:00:00+00:00',
+  last_login_at: '2026-02-17T10:00:00+00:00',
+};
 
 export const mockArticles: Article[] = [
   // AI/ML category (4 articles, scores 0.75-0.95)
