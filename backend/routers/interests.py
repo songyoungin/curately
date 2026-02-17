@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any, cast
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from backend.auth import get_current_user_id
 from backend.schemas.interests import UserInterestResponse
 from backend.supabase_client import get_supabase_client
 
@@ -16,22 +17,11 @@ router = APIRouter(prefix="/api/interests", tags=["interests"])
 
 
 @router.get("", response_model=list[UserInterestResponse])
-async def list_interests() -> list[dict[str, Any]]:
-    """Return the default user's interest profile sorted by weight descending."""
+async def list_interests(
+    user_id: int = Depends(get_current_user_id),
+) -> list[dict[str, Any]]:
+    """Return the authenticated user's interest profile sorted by weight descending."""
     client = get_supabase_client()
-
-    # Resolve default user ID
-    user_resp = (
-        client.table("users")
-        .select("id")
-        .eq("email", "default@curately.local")
-        .execute()
-    )
-    users = cast(list[dict[str, Any]], user_resp.data)
-    if not users:
-        return []
-
-    user_id = users[0]["id"]
 
     response = (
         client.table("user_interests")

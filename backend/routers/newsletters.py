@@ -3,35 +3,13 @@
 from datetime import date, datetime, timezone
 from typing import Any, cast
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from backend.auth import get_current_user_id
 from backend.schemas.articles import NewsletterListItem, NewsletterResponse
-from backend.seed import DEFAULT_USER_EMAIL
 from backend.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/newsletters", tags=["newsletters"])
-
-
-def _get_default_user_id() -> int:
-    """Fetch the default MVP user's ID from the database.
-
-    Returns:
-        The user ID for the default user.
-
-    Raises:
-        HTTPException: If the default user is not found.
-    """
-    client = get_supabase_client()
-    result = (
-        client.table("users").select("id").eq("email", DEFAULT_USER_EMAIL).execute()
-    )
-    if not result.data:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Default user not found",
-        )
-    row = cast(dict[str, Any], result.data[0])
-    return cast(int, row["id"])
 
 
 def _attach_interaction_flags(
@@ -112,30 +90,37 @@ async def list_newsletters(
 
 
 @router.get("/today", response_model=NewsletterResponse)
-async def get_today_newsletter() -> dict[str, Any]:
+async def get_today_newsletter(
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
     """Return today's newsletter with articles sorted by relevance score."""
     today = datetime.now(timezone.utc).date()
-    return _get_newsletter_by_date(today)
+    return _get_newsletter_by_date(today, user_id)
 
 
 @router.get("/{newsletter_date}", response_model=NewsletterResponse)
-async def get_newsletter_by_date(newsletter_date: date) -> dict[str, Any]:
+async def get_newsletter_by_date(
+    newsletter_date: date,
+    user_id: int = Depends(get_current_user_id),
+) -> dict[str, Any]:
     """Return a specific date's newsletter.
 
     Args:
         newsletter_date: The date in YYYY-MM-DD format.
+        user_id: Injected by the JWT auth dependency.
 
     Raises:
         HTTPException: 404 if no articles exist for the given date.
     """
-    return _get_newsletter_by_date(newsletter_date)
+    return _get_newsletter_by_date(newsletter_date, user_id)
 
 
-def _get_newsletter_by_date(target_date: date) -> dict[str, Any]:
+def _get_newsletter_by_date(target_date: date, user_id: int) -> dict[str, Any]:
     """Fetch articles for a specific newsletter date.
 
     Args:
         target_date: The newsletter date to fetch.
+        user_id: The authenticated user's ID for interaction flags.
 
     Returns:
         Newsletter response dict with date, count, and articles.
@@ -159,7 +144,6 @@ def _get_newsletter_by_date(target_date: date) -> dict[str, Any]:
             detail=f"No newsletter found for {target_date.isoformat()}",
         )
 
-    user_id = _get_default_user_id()
     articles = _attach_interaction_flags(rows, user_id)
 
     return {
