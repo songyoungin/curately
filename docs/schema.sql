@@ -89,6 +89,235 @@ CREATE TABLE rewind_reports (
 );
 
 -- ============================================================
+-- Row Level Security (RLS)
+-- ============================================================
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feeds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_interests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rewind_reports ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- RLS Policies
+-- ============================================================
+-- Shared tables: authenticated read-only
+CREATE POLICY feeds_select_authenticated
+ON feeds
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY articles_select_authenticated
+ON articles
+FOR SELECT
+TO authenticated
+USING (true);
+
+-- users: each user can access only their own row (email from JWT)
+CREATE POLICY users_select_own
+ON users
+FOR SELECT
+TO authenticated
+USING (email = auth.jwt()->>'email');
+
+CREATE POLICY users_update_own
+ON users
+FOR UPDATE
+TO authenticated
+USING (email = auth.jwt()->>'email')
+WITH CHECK (email = auth.jwt()->>'email');
+
+CREATE POLICY users_insert_self
+ON users
+FOR INSERT
+TO authenticated
+WITH CHECK (email = auth.jwt()->>'email');
+
+-- interactions: user-scoped
+CREATE POLICY interactions_select_own
+ON interactions
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = interactions.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY interactions_insert_own
+ON interactions
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = interactions.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY interactions_update_own
+ON interactions
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = interactions.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = interactions.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY interactions_delete_own
+ON interactions
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = interactions.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+-- user_interests: user-scoped
+CREATE POLICY user_interests_select_own
+ON user_interests
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = user_interests.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY user_interests_insert_own
+ON user_interests
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = user_interests.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY user_interests_update_own
+ON user_interests
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = user_interests.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = user_interests.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY user_interests_delete_own
+ON user_interests
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = user_interests.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+-- rewind_reports: user-scoped
+CREATE POLICY rewind_reports_select_own
+ON rewind_reports
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = rewind_reports.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY rewind_reports_insert_own
+ON rewind_reports
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = rewind_reports.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY rewind_reports_update_own
+ON rewind_reports
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = rewind_reports.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = rewind_reports.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+CREATE POLICY rewind_reports_delete_own
+ON rewind_reports
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = rewind_reports.user_id
+      AND u.email = auth.jwt()->>'email'
+  )
+);
+
+-- ============================================================
 -- Indexes
 -- ============================================================
 CREATE INDEX idx_articles_newsletter_date ON articles(newsletter_date);
