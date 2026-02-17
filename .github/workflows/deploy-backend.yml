@@ -32,6 +32,7 @@ jobs:
       SERVICE_NAME: curately-backend
       ENABLE_REQUIRED_APIS: "false"
       BUILD_STRATEGY: "local"
+      IMAGE_TAGS: sha-${{ github.sha }},latest
     steps:
       - uses: actions/checkout@v6
 
