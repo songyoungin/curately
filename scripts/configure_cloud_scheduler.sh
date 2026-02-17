@@ -14,7 +14,7 @@ set -euo pipefail
 # - DAILY_SCHEDULE (default: 0 6 * * *)
 # - WEEKLY_JOB_NAME (default: curately-weekly-rewind)
 # - WEEKLY_SCHEDULE (default: 0 23 * * 0)
-# - SCHEDULE_TIMEZONE (default: Etc/UTC)
+# - SCHEDULE_TIMEZONE (default: Asia/Seoul)
 # - ENABLE_REQUIRED_APIS (default: true)
 
 required_vars=(
@@ -35,7 +35,7 @@ DAILY_JOB_NAME="${DAILY_JOB_NAME:-curately-daily-pipeline}"
 DAILY_SCHEDULE="${DAILY_SCHEDULE:-0 6 * * *}"
 WEEKLY_JOB_NAME="${WEEKLY_JOB_NAME:-curately-weekly-rewind}"
 WEEKLY_SCHEDULE="${WEEKLY_SCHEDULE:-0 23 * * 0}"
-SCHEDULE_TIMEZONE="${SCHEDULE_TIMEZONE:-Etc/UTC}"
+SCHEDULE_TIMEZONE="${SCHEDULE_TIMEZONE:-Asia/Seoul}"
 ENABLE_REQUIRED_APIS="${ENABLE_REQUIRED_APIS:-true}"
 
 if [[ "${ENABLE_REQUIRED_APIS}" == "true" ]]; then

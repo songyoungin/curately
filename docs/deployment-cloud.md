@@ -63,8 +63,8 @@ Create/update jobs:
 
 Default jobs:
 
-- Daily pipeline: `0 6 * * *` (UTC) -> `POST /api/pipeline/run`
-- Weekly rewind: `0 23 * * 0` (UTC) -> `POST /api/pipeline/rewind/run`
+- Daily pipeline: `0 6 * * *` (Asia/Seoul, KST) -> `POST /api/pipeline/run`
+- Weekly rewind: `0 23 * * 0` (Asia/Seoul, KST) -> `POST /api/pipeline/rewind/run`
 
 ## 4) Deploy Frontend (Cloudflare Pages)
 
