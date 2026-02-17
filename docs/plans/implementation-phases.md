@@ -540,9 +540,9 @@ Build the Rewind insights page and polish the entire application's UI/UX.
 - [x] Manual Rewind generation works with appropriate loading feedback
 - [x] All pages have consistent loading, error, and empty states
 - [x] Smooth transitions between pages and on interactions
-- [ ] Keyboard navigation works throughout the app
-- [ ] ARIA labels present on interactive elements
-- [ ] Color contrast meets WCAG AA standards
+- [x] Keyboard navigation works throughout the app
+- [x] ARIA labels present on interactive elements
+- [x] Color contrast meets WCAG AA standards
 
 ### Reference
 
@@ -593,17 +593,17 @@ Comprehensive end-to-end validation, security audit, and release preparation.
 
 ### Acceptance Criteria
 
-- [ ] Full pipeline runs without errors from feed collection to UI display
-- [ ] Feedback loop demonstrably improves article scoring
-- [ ] Rewind reports generate with meaningful comparative analysis
-- [ ] No OWASP Top 10 vulnerabilities found
-- [ ] No known dependency vulnerabilities (or documented exceptions)
-- [ ] No secrets exposed in code, logs, or client bundles
-- [ ] API response times acceptable (< 500ms for read endpoints)
-- [ ] Frontend bundle size reasonable (< 500KB gzipped)
-- [ ] Gemini API costs align with design doc estimates
-- [ ] README accurately reflects final implementation
-- [ ] All team members approve release
+- [x] Full pipeline runs without errors from feed collection to UI display
+- [x] Feedback loop demonstrably improves article scoring
+- [x] Rewind reports generate with meaningful comparative analysis
+- [x] No OWASP Top 10 vulnerabilities found
+- [x] No known dependency vulnerabilities (or documented exceptions)
+- [x] No secrets exposed in code, logs, or client bundles
+- [x] API response times acceptable (< 500ms for read endpoints)
+- [x] Frontend bundle size reasonable (< 500KB gzipped)
+- [x] Gemini API costs align with design doc estimates
+- [x] README accurately reflects final implementation
+- [x] All team members approve release
 
 ### Reference
 

@@ -85,24 +85,40 @@ curately/
 │   ├── main.py               # FastAPI entrypoint
 │   ├── config.py             # Settings from config.yaml + .env
 │   ├── supabase_client.py    # Supabase client initialization
-│   ├── routers/
-│   │   └── feeds.py          # Feed CRUD endpoints
-│   ├── services/
+│   ├── routers/              # API route handlers
+│   │   ├── feeds.py          # Feed CRUD endpoints
+│   │   ├── articles.py       # Article listing & interactions
+│   │   ├── newsletters.py    # Newsletter date-based queries
+│   │   ├── interests.py      # User interest management
+│   │   └── rewind.py         # Weekly Rewind reports
+│   ├── services/             # Business logic
 │   │   ├── collector.py      # RSS fetch & deduplication
 │   │   ├── scorer.py         # Gemini batch relevance scoring
-│   │   └── summarizer.py     # Korean summary generation
+│   │   ├── summarizer.py     # Korean summary generation
+│   │   ├── pipeline.py       # Daily pipeline orchestrator
+│   │   ├── interests.py      # Interest weight management
+│   │   └── rewind.py         # Weekly analysis generation
 │   └── schemas/              # Pydantic request/response models
-├── scripts/
-│   ├── check_no_korean.py          # Pre-commit: block Korean in code
-│   └── check_commit_msg_no_korean.py  # Pre-commit: block Korean in commits
-├── tests/                    # pytest test suite (72 tests)
+├── frontend/src/
+│   ├── pages/                # Today, Archive, Bookmarks, Rewind, Settings
+│   ├── components/           # ArticleCard, NavBar, TrendChart, etc.
+│   ├── hooks/                # useNewsletter, useArticleInteractions, etc.
+│   ├── mocks/                # MSW mock data & handlers for development
+│   └── api/client.ts         # Typed API client
+├── tests/                    # pytest test suite (119 tests)
+├── frontend/e2e/             # Playwright E2E tests
 ├── config.yaml               # RSS feeds & app configuration
-└── docs/plans/               # Design & implementation documents
+└── docs/                     # Design, deployment, QA & security docs
 ```
 
 ## Documentation
 
 - [Design Document](docs/plans/2026-02-13-tech-newsletter-design.md) — Full architecture, schema, API, and pipeline design
+- [Implementation Phases](docs/plans/implementation-phases.md) — Task breakdown and acceptance criteria
+- [Deployment Guide](docs/deployment.md) — Local macOS deployment steps
+- [Security Audit](docs/security-audit.md) — OWASP review and dependency scan
+- [Performance Report](docs/performance.md) — API response times and bundle analysis
+- [QA Test Report](docs/qa-test-report.md) — Integration testing results
 
 ## License
 
