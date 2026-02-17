@@ -65,6 +65,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+    settings = get_settings()
+    origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+    origins = [origin for origin in origins if origin]
+
     app = FastAPI(
         title="Curately",
         description="AI-curated personal tech newsletter",
@@ -74,7 +78,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

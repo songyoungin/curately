@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     # App config
     env: str = Field(default="dev")
     enable_internal_scheduler: bool = Field(default=True)
+    cors_origins: str = Field(default="http://localhost:5173")
 
     # Secrets from .env
     gemini_api_key: str = Field(default="")
