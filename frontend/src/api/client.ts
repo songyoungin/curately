@@ -13,7 +13,7 @@ import type {
 import { supabase } from '../lib/supabase';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
 // Request interceptor: inject auth token from Supabase session
