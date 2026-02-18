@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Today from './pages/Today'
 import Archive from './pages/Archive'
 import Bookmarks from './pages/Bookmarks'
+import Digest from './pages/Digest'
 import Rewind from './pages/Rewind'
 import Settings from './pages/Settings'
 
@@ -27,6 +28,7 @@ function AppLayout() {
               >
                 <Routes location={location}>
                   <Route path="/" element={<Today />} />
+                  <Route path="/digest" element={<Digest />} />
                   <Route path="/archive" element={<Archive />} />
                   <Route path="/bookmarks" element={<Bookmarks />} />
                   <Route path="/rewind" element={<Rewind />} />

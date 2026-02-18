@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Newspaper } from "lucide-react";
+import { Newspaper, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 import DateHeader from "../components/DateHeader";
 import ArticleCard from "../components/ArticleCard";
@@ -7,6 +8,7 @@ import { ArticleCardSkeleton, ErrorDisplay, EmptyState } from "../components/com
 import { useNewsletter, useArticleInteractions } from "../hooks";
 
 export default function Today() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { newsletter, loading, error, refetch } = useNewsletter();
   const initialArticles = useMemo(
     () => newsletter?.articles ?? [],
@@ -14,13 +16,34 @@ export default function Today() {
   );
   const { articles, toggleLike, toggleBookmark } =
     useArticleInteractions(initialArticles);
+  const rawArticleFilter = searchParams.get("articles");
+  const filterArticleIds = useMemo(() => {
+    if (!rawArticleFilter) {
+      return null;
+    }
+
+    return rawArticleFilter.split(",").map(Number).filter((n) => !Number.isNaN(n));
+  }, [rawArticleFilter]);
+  const filteredArticles = useMemo(() => {
+    if (!filterArticleIds) {
+      return articles;
+    }
+
+    return articles.filter((article) => filterArticleIds.includes(article.id));
+  }, [articles, filterArticleIds]);
   const sortedArticles = useMemo(
     () =>
-      [...articles].sort(
+      [...filteredArticles].sort(
         (a, b) => (b.relevance_score ?? -1) - (a.relevance_score ?? -1),
       ),
-    [articles],
+    [filteredArticles],
   );
+
+  const handleShowAll = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("articles");
+    setSearchParams(nextParams, { replace: true });
+  };
 
   if (loading) {
     return (
@@ -65,8 +88,25 @@ export default function Today() {
         </p>
       </header>
 
+      {filterArticleIds && (
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-blue-900">
+              Showing {sortedArticles.length} articles from Digest
+            </p>
+            <button
+              type="button"
+              onClick={handleShowAll}
+              className="inline-flex items-center gap-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-sm font-medium text-blue-900 hover:bg-blue-100"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+              Show all
+            </button>
+          </div>
+        </div>
+      )}
       <div className="mt-6">
-        <DateHeader date={newsletter.date} articleCount={articles.length} />
+        <DateHeader date={newsletter.date} articleCount={sortedArticles.length} />
       </div>
       <div className="mt-6 space-y-4">
         {sortedArticles.map((article) => (

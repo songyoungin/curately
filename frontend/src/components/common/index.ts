@@ -9,4 +9,5 @@ export {
   FeedListSkeleton,
   InterestProfileSkeleton,
   RewindSkeleton,
+  DigestSkeleton,
 } from './Skeleton';

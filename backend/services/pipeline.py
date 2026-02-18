@@ -15,6 +15,7 @@ from supabase import Client
 from backend.config import Settings, get_settings
 from backend.time_utils import today_kst
 from backend.services.collector import collect_articles
+from backend.services.digest import generate_daily_digest, persist_digest
 from backend.services.scorer import score_articles
 from backend.services.interests import apply_time_decay
 from backend.services.summarizer import generate_basic_summary
@@ -30,6 +31,7 @@ class PipelineResult(TypedDict):
     articles_filtered: int
     articles_summarized: int
     newsletter_date: str
+    digest_generated: bool
 
 
 async def run_daily_pipeline(
@@ -70,6 +72,7 @@ async def run_daily_pipeline(
             articles_filtered=0,
             articles_summarized=0,
             newsletter_date=today,
+            digest_generated=False,
         )
     logger.info("Collected %d new article(s)", len(articles))
 
@@ -98,6 +101,7 @@ async def run_daily_pipeline(
             articles_filtered=0,
             articles_summarized=0,
             newsletter_date=today,
+            digest_generated=False,
         )
 
     # Merge scores into articles
@@ -162,12 +166,29 @@ async def run_daily_pipeline(
     _persist_articles(client, filtered, today)
     logger.info("Persisted %d article(s) for newsletter date %s", len(filtered), today)
 
+    # Stage 7: Generate daily digest
+    logger.info("Stage 7/7: Generating daily digest")
+    digest_generated = False
+    try:
+        digest_content, digest_article_ids = await generate_daily_digest(
+            client, today, settings
+        )
+        if digest_content["headline"]:
+            await persist_digest(client, today, digest_content, digest_article_ids)
+            digest_generated = True
+            logger.info("Daily digest generated for %s", today)
+        else:
+            logger.info("Empty digest (no headline), skipping persist")
+    except Exception:
+        logger.warning("Digest generation failed, pipeline continues without digest")
+
     result = PipelineResult(
         articles_collected=len(articles),
         articles_scored=articles_scored,
         articles_filtered=len(filtered),
         articles_summarized=summarized_count,
         newsletter_date=today,
+        digest_generated=digest_generated,
     )
     logger.info("Daily pipeline complete: %s", result)
     return result

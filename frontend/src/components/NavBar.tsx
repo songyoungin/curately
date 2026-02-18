@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom'
 import {
   Newspaper,
   Archive,
+  FileText,
   Bookmark,
   TrendingUp,
   Settings,
@@ -14,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Today', icon: Newspaper },
+  { to: '/digest', label: 'Digest', icon: FileText },
   { to: '/archive', label: 'Archive', icon: Archive },
   { to: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { to: '/rewind', label: 'Rewind', icon: TrendingUp },

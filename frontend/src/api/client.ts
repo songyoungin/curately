@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import type {
   Article,
+  Digest,
   Feed,
   FeedCreate,
   Interaction,
@@ -73,6 +74,15 @@ export const rewindApi = {
   getLatest: () => api.get<RewindReport>('/rewind/latest'),
   getById: (id: number) => api.get<RewindReport>(`/rewind/${id}`),
   generate: () => api.post<RewindReport>('/rewind/generate'),
+};
+
+// Digests
+export const digestApi = {
+  getToday: () => api.get<Digest>('/digests/today'),
+  getByDate: (date: string) => api.get<Digest>(`/digests/${date}`),
+  list: () => api.get<Digest[]>('/digests'),
+  generate: () => api.post<Digest>('/digests/generate'),
+  generateForDate: (date: string) => api.post<Digest>(`/digests/generate/${date}`),
 };
 
 // Pipeline (admin/dev)
