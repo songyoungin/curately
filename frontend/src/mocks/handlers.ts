@@ -4,6 +4,7 @@ import {
   mockEditions,
   mockFeeds,
   mockInterests,
+  mockDigest,
   mockRewindReports,
   mockUser,
 } from './data';
@@ -47,6 +48,42 @@ export const handlers = [
       article_count: articles.length,
       articles,
     });
+  }),
+
+  // GET /api/digests/today (must be before /api/digests/:date)
+  http.get('/api/digests/today', () => {
+    return HttpResponse.json(mockDigest);
+  }),
+
+  // GET /api/digests (list)
+  http.get('/api/digests', () => {
+    return HttpResponse.json([mockDigest]);
+  }),
+
+  // GET /api/digests/:date
+  http.get('/api/digests/:date', ({ params }) => {
+    if (params.date === mockDigest.digest_date) {
+      return HttpResponse.json(mockDigest);
+    }
+    return new HttpResponse(null, { status: 404 });
+  }),
+
+  // POST /api/digests/generate (must be before /api/digests/generate/:date)
+  http.post('/api/digests/generate', async () => {
+    await delay(1500);
+    return HttpResponse.json(mockDigest, { status: 201 });
+  }),
+
+  // POST /api/digests/generate/:date
+  http.post('/api/digests/generate/:date', async ({ params }) => {
+    await delay(1500);
+    if (params.date === mockDigest.digest_date) {
+      return HttpResponse.json(mockDigest, { status: 201 });
+    }
+    return new HttpResponse(
+      JSON.stringify({ detail: `No articles found for ${params.date}` }),
+      { status: 404 },
+    );
   }),
 
   // GET /api/articles/bookmarked (must be before /api/articles/:id to avoid route conflict)

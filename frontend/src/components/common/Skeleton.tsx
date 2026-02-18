@@ -200,3 +200,36 @@ export function RewindSkeleton() {
     </div>
   );
 }
+
+export function DigestSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Header skeleton */}
+      <div className="pb-4 border-b border-gray-200">
+        <div className="h-7 w-36 rounded bg-gray-200" />
+        <div className="h-4 w-48 rounded bg-gray-200 mt-2" />
+      </div>
+      {/* Headline skeleton */}
+      <div className="rounded-xl bg-gray-100 p-6">
+        <div className="h-6 w-3/4 rounded bg-gray-200" />
+      </div>
+      {/* Takeaways skeleton */}
+      <div className="rounded-xl bg-gray-100 p-5 space-y-2">
+        <div className="h-4 w-24 rounded bg-gray-200" />
+        <div className="h-3 w-full rounded bg-gray-200" />
+        <div className="h-3 w-5/6 rounded bg-gray-200" />
+        <div className="h-3 w-4/6 rounded bg-gray-200" />
+      </div>
+      {/* Section skeletons (x3) */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="rounded-xl bg-gray-100 p-5 space-y-3">
+          <div className="h-4 w-16 rounded-full bg-gray-200" />
+          <div className="h-5 w-2/3 rounded bg-gray-200" />
+          <div className="h-3 w-full rounded bg-gray-200" />
+          <div className="h-3 w-full rounded bg-gray-200" />
+          <div className="h-3 w-3/4 rounded bg-gray-200" />
+        </div>
+      ))}
+    </div>
+  );
+}

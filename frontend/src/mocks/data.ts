@@ -1,4 +1,5 @@
 import type { Article } from '../types/article';
+import type { Digest } from '../types/digest';
 import type { Feed } from '../types/feed';
 import type { UserInterest } from '../types/interest';
 import type { NewsletterEdition } from '../types/newsletter';
@@ -448,3 +449,43 @@ export const mockRewindReports: RewindReport[] = [
 
 // Keep backward-compatible alias for existing code
 export const mockRewindReport: RewindReport = mockRewindReports[0];
+
+export const mockDigest: Digest = {
+  id: 1,
+  digest_date: '2026-02-16',
+  content: {
+    headline: 'AI 에이전트 혁신과 클라우드 인프라 진화가 개발 생태계를 재편',
+    sections: [
+      {
+        theme: 'AI/ML',
+        title: 'AI 에이전트와 LLM의 급격한 진화',
+        body: 'GPT-5 출시가 임박한 가운데, 멀티모달 기능과 코드 생성 능력이 크게 향상될 전망입니다. AI 에이전트의 도구 사용 패턴이 프로덕션 환경에서 검증되고 있으며, ReAct 프레임워크와 함수 호출 조합이 가장 높은 성공률을 보이고 있습니다. LLM 파인튜닝의 접근성도 크게 향상되어 8GB VRAM GPU에서도 효과적인 학습이 가능해졌습니다.',
+        article_ids: [1, 2, 3],
+      },
+      {
+        theme: 'DevOps',
+        title: 'Kubernetes 생태계 진화와 인프라 도구 경쟁',
+        body: 'Kubernetes 1.33 출시로 사이드카 컨테이너 네이티브 지원이라는 오랜 숙원이 해결되었습니다. 메모리 사용량 15% 감소와 Pod 시작 시간 단축도 주목할 만합니다. IaC 영역에서는 Terraform과 Pulumi의 경쟁이 심화되고 있으며, GitOps 모범 사례도 성숙기에 접어들고 있습니다.',
+        article_ids: [5, 6, 7],
+      },
+      {
+        theme: 'Backend',
+        title: '데이터베이스와 분산 시스템의 진보',
+        body: 'PostgreSQL 17이 병렬 쿼리 실행 30% 향상과 JSONB 인덱싱 개선을 포함하여 출시되었습니다. 대규모 테이블의 VACUUM 효율성도 크게 개선되었으며, 분산 시스템에서의 Rate Limiter 설계에 대한 심층 분석도 실무에 바로 적용 가능한 수준입니다.',
+        article_ids: [8, 9],
+      },
+    ],
+    key_takeaways: [
+      'GPT-5 출시 임박 — 멀티모달 기능 향상, API 가격 40% 인하 예정',
+      'AI 에이전트의 프로덕션 적용이 가속화, ReAct + 함수 호출 조합이 최적 아키텍처로 부상',
+      'Kubernetes 1.33의 사이드카 네이티브 지원으로 컨테이너 오케스트레이션의 오랜 과제 해결',
+      'PostgreSQL 17의 병렬 쿼리 30% 향상은 대규모 데이터 처리에 즉시 적용 가능',
+    ],
+    connections:
+      'AI와 인프라 주제가 긴밀하게 연결되어 있습니다. AI 워크로드의 급격한 증가가 Kubernetes와 같은 클라우드 인프라의 성능 개선을 요구하고 있으며, PostgreSQL의 JSONB 성능 향상은 AI 메타데이터 저장과 벡터 인덱싱에 직접적인 이점을 제공합니다. MLOps의 성숙은 이 모든 요소를 연결하는 접착제 역할을 하고 있습니다.',
+  },
+  article_ids: [1, 2, 3, 5, 6, 7, 8, 9],
+  article_count: 8,
+  created_at: '2026-02-16T06:30:00Z',
+  updated_at: '2026-02-16T06:30:00Z',
+};
