@@ -4,4 +4,5 @@ export type { Interaction, InteractionType } from './interaction';
 export type { UserInterest } from './interest';
 export type { Newsletter, NewsletterEdition } from './newsletter';
 export type { HotTopic, RewindReport, TrendChange } from './rewind';
+export type { Digest, DigestContent, DigestSection } from './digest';
 export type { User } from './user';
