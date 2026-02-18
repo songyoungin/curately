@@ -10,6 +10,11 @@ from backend.services.pipeline import (
     run_daily_pipeline,
 )
 
+_EMPTY_DIGEST_RESULT: tuple[dict[str, object], list[int]] = (
+    {"headline": "", "sections": [], "key_takeaways": [], "connections": ""},
+    [],
+)
+
 
 # --- Helpers ---
 
@@ -163,6 +168,14 @@ def test_filter_articles_empty_when_all_below_threshold() -> None:
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.persist_digest", new_callable=AsyncMock, return_value=1
+)
+@patch(
+    "backend.services.pipeline.generate_daily_digest",
+    new_callable=AsyncMock,
+    return_value=_EMPTY_DIGEST_RESULT,
+)
 @patch("backend.services.pipeline.today_kst", return_value=date(2026, 2, 16))
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
@@ -176,6 +189,8 @@ async def test_pipeline_happy_path(
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_today_kst: MagicMock,
+    _mock_generate_digest: AsyncMock,
+    _mock_persist_digest: AsyncMock,
 ) -> None:
     """Verify full pipeline happy path with 3 articles, 2 above threshold.
 
@@ -206,6 +221,7 @@ async def test_pipeline_happy_path(
     assert result["articles_filtered"] == 2
     assert result["articles_summarized"] == 2
     assert result["newsletter_date"] == "2026-02-16"
+    assert result["digest_generated"] is False
 
     # Verify persist was called for 2 articles
     upsert_calls = client.table("articles").upsert.call_args_list
@@ -231,6 +247,7 @@ async def test_pipeline_empty_collection(mock_collect: AsyncMock) -> None:
     assert result["articles_scored"] == 0
     assert result["articles_filtered"] == 0
     assert result["articles_summarized"] == 0
+    assert result["digest_generated"] is False
 
 
 @pytest.mark.asyncio
@@ -263,9 +280,18 @@ async def test_pipeline_scoring_failure(
     assert result["articles_scored"] == 0
     assert result["articles_filtered"] == 0
     assert result["articles_summarized"] == 0
+    assert result["digest_generated"] is False
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.persist_digest", new_callable=AsyncMock, return_value=1
+)
+@patch(
+    "backend.services.pipeline.generate_daily_digest",
+    new_callable=AsyncMock,
+    return_value=_EMPTY_DIGEST_RESULT,
+)
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
@@ -277,6 +303,8 @@ async def test_pipeline_summarization_failure(
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
+    _mock_generate_digest: AsyncMock,
+    _mock_persist_digest: AsyncMock,
 ) -> None:
     """Verify articles are persisted without summary on summarization failure.
 
@@ -298,6 +326,7 @@ async def test_pipeline_summarization_failure(
     assert result["articles_scored"] == 1
     assert result["articles_filtered"] == 1
     assert result["articles_summarized"] == 0
+    assert result["digest_generated"] is False
 
     # Article should still be persisted
     upsert_calls = client.table("articles").upsert.call_args_list
@@ -307,6 +336,14 @@ async def test_pipeline_summarization_failure(
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.persist_digest", new_callable=AsyncMock, return_value=1
+)
+@patch(
+    "backend.services.pipeline.generate_daily_digest",
+    new_callable=AsyncMock,
+    return_value=_EMPTY_DIGEST_RESULT,
+)
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
@@ -318,6 +355,8 @@ async def test_pipeline_filtering_threshold_and_top_n(
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
+    _mock_generate_digest: AsyncMock,
+    _mock_persist_digest: AsyncMock,
 ) -> None:
     """Verify filtering respects both threshold and max_count.
 
@@ -346,9 +385,18 @@ async def test_pipeline_filtering_threshold_and_top_n(
 
     assert result["articles_filtered"] == 2
     assert result["articles_summarized"] == 2
+    assert result["digest_generated"] is False
 
 
 @pytest.mark.asyncio
+@patch(
+    "backend.services.pipeline.persist_digest", new_callable=AsyncMock, return_value=1
+)
+@patch(
+    "backend.services.pipeline.generate_daily_digest",
+    new_callable=AsyncMock,
+    return_value=_EMPTY_DIGEST_RESULT,
+)
 @patch("backend.services.pipeline.today_kst", return_value=date(2026, 2, 16))
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
@@ -362,6 +410,8 @@ async def test_pipeline_newsletter_date_is_today(
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_today_kst: MagicMock,
+    _mock_generate_digest: AsyncMock,
+    _mock_persist_digest: AsyncMock,
 ) -> None:
     """Verify newsletter_date in result and persisted rows matches today's date.
 
@@ -380,6 +430,7 @@ async def test_pipeline_newsletter_date_is_today(
 
     expected_date = "2026-02-16"
     assert result["newsletter_date"] == expected_date
+    assert result["digest_generated"] is False
 
     # Verify persisted row has correct newsletter_date
     upsert_calls = client.table("articles").upsert.call_args_list

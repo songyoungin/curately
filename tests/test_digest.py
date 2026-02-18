@@ -1,17 +1,21 @@
 """Digest service tests."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from fastapi.testclient import TestClient
 
+from backend.main import app
 from backend.services.digest import (
     _NO_ARTICLES_DIGEST,
     _parse_digest_response,
     generate_daily_digest,
     persist_digest,
 )
+
+client = TestClient(app)
 
 SAMPLE_ARTICLES = [
     {
@@ -42,6 +46,28 @@ SAMPLE_ARTICLES = [
         "source_url": "https://example.com/c",
     },
 ]
+
+SAMPLE_DIGEST_ROW = {
+    "id": 42,
+    "digest_date": "2026-02-16",
+    "content": {
+        "headline": "AI and infrastructure are converging today.",
+        "sections": [
+            {
+                "theme": "AI/ML",
+                "title": "Agent transition",
+                "body": "Teams are moving agent workflows into production.",
+                "article_ids": [101, 103],
+            }
+        ],
+        "key_takeaways": ["AI adoption is accelerating."],
+        "connections": "AI demand is directly connected to infrastructure spend.",
+    },
+    "article_ids": [101, 102, 103],
+    "article_count": 3,
+    "created_at": "2026-02-16T00:00:00+00:00",
+    "updated_at": "2026-02-16T00:00:00+00:00",
+}
 
 
 def _make_service_supabase_mock(
@@ -80,6 +106,40 @@ def _make_settings() -> MagicMock:
     settings.gemini_api_key = "test-api-key"
     settings.gemini.model = "gemini-2.5-flash"
     return settings
+
+
+def _make_router_mock_client(
+    *,
+    article_count: int = 0,
+    digest_rows: list[dict] | None = None,
+) -> MagicMock:
+    """Build a mock Supabase client for digest router tests."""
+    mock_articles = MagicMock()
+    mock_digests = MagicMock()
+
+    mock_articles.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        count=article_count
+    )
+
+    digest_data = digest_rows if digest_rows is not None else []
+    mock_digests.select.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=digest_data
+    )
+    mock_digests.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+        data=digest_data
+    )
+
+    mock_client = MagicMock()
+
+    def route_table(name: str) -> MagicMock:
+        if name == "articles":
+            return mock_articles
+        if name == "digests":
+            return mock_digests
+        return MagicMock()
+
+    mock_client.table.side_effect = route_table
+    return mock_client
 
 
 @pytest.mark.asyncio
@@ -284,3 +344,188 @@ async def test_persist_digest_upsert() -> None:
     assert isinstance(row["updated_at"], str)
     assert datetime.fromisoformat(row["updated_at"]) is not None
     assert upsert_call.kwargs["on_conflict"] == "digest_date"
+
+
+# --- Router tests ---
+
+
+@patch("backend.routers.digest.today_kst", return_value=date(2026, 2, 16))
+@patch("backend.routers.digest.get_supabase_client")
+def test_get_today_digest_200(
+    mock_get_client: MagicMock,
+    _mock_today: MagicMock,
+) -> None:
+    """Return today's digest when it exists."""
+    mock_get_client.return_value = _make_router_mock_client(
+        digest_rows=[SAMPLE_DIGEST_ROW],
+    )
+
+    response = client.get("/api/digests/today")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == 42
+    assert body["digest_date"] == "2026-02-16"
+    assert body["content"]["headline"] == "AI and infrastructure are converging today."
+    assert body["article_ids"] == [101, 102, 103]
+    assert body["article_count"] == 3
+
+
+@patch("backend.routers.digest.today_kst", return_value=date(2026, 2, 16))
+@patch("backend.routers.digest.get_supabase_client")
+def test_get_today_digest_404(
+    mock_get_client: MagicMock,
+    _mock_today: MagicMock,
+) -> None:
+    """Return 404 when today's digest does not exist."""
+    mock_get_client.return_value = _make_router_mock_client(digest_rows=[])
+
+    response = client.get("/api/digests/today")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No digest found for today"
+
+
+@patch("backend.routers.digest.get_supabase_client")
+def test_get_digest_by_date_200(mock_get_client: MagicMock) -> None:
+    """Return digest for the specified date when it exists."""
+    mock_get_client.return_value = _make_router_mock_client(
+        digest_rows=[SAMPLE_DIGEST_ROW]
+    )
+
+    response = client.get("/api/digests/2026-02-16")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == 42
+    assert body["digest_date"] == "2026-02-16"
+
+
+@patch("backend.routers.digest.get_supabase_client")
+def test_get_digest_by_date_404(mock_get_client: MagicMock) -> None:
+    """Return 404 when digest is missing for requested date."""
+    mock_get_client.return_value = _make_router_mock_client(digest_rows=[])
+
+    response = client.get("/api/digests/2026-02-16")
+
+    assert response.status_code == 404
+    assert "2026-02-16" in response.json()["detail"]
+
+
+@patch("backend.routers.digest.today_kst", return_value=date(2026, 2, 16))
+@patch("backend.routers.digest.persist_digest", new_callable=AsyncMock, return_value=42)
+@patch("backend.routers.digest.generate_daily_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.get_supabase_client")
+def test_post_generate_201(
+    mock_get_client: MagicMock,
+    mock_generate: AsyncMock,
+    mock_persist: AsyncMock,
+    _mock_today: MagicMock,
+) -> None:
+    """Generate today's digest and return persisted row."""
+    mock_generate.return_value = (SAMPLE_DIGEST_ROW["content"], [101, 102, 103])
+    mock_get_client.return_value = _make_router_mock_client(
+        article_count=3,
+        digest_rows=[SAMPLE_DIGEST_ROW],
+    )
+
+    response = client.post("/api/digests/generate")
+
+    assert response.status_code == 201
+    assert response.json()["id"] == 42
+    mock_generate.assert_awaited_once()
+    mock_persist.assert_awaited_once()
+
+
+@patch("backend.routers.digest.today_kst", return_value=date(2026, 2, 16))
+@patch("backend.routers.digest.persist_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.generate_daily_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.get_supabase_client")
+def test_post_generate_no_articles_404(
+    mock_get_client: MagicMock,
+    mock_generate: AsyncMock,
+    _mock_persist: AsyncMock,
+    _mock_today: MagicMock,
+) -> None:
+    """Return 404 when no articles exist for today."""
+    mock_get_client.return_value = _make_router_mock_client(article_count=0)
+
+    response = client.post("/api/digests/generate")
+
+    assert response.status_code == 404
+    mock_generate.assert_not_awaited()
+
+
+@patch("backend.routers.digest.today_kst", return_value=date(2026, 2, 16))
+@patch("backend.routers.digest.persist_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.generate_daily_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.get_supabase_client")
+def test_post_generate_empty_result_502(
+    mock_get_client: MagicMock,
+    mock_generate: AsyncMock,
+    mock_persist: AsyncMock,
+    _mock_today: MagicMock,
+) -> None:
+    """Return 502 when digest generation returns empty headline."""
+    mock_generate.return_value = (_NO_ARTICLES_DIGEST, [])
+    mock_get_client.return_value = _make_router_mock_client(article_count=3)
+
+    response = client.post("/api/digests/generate")
+
+    assert response.status_code == 502
+    mock_persist.assert_not_awaited()
+
+
+@patch("backend.routers.digest.persist_digest", new_callable=AsyncMock, return_value=42)
+@patch("backend.routers.digest.generate_daily_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.get_supabase_client")
+def test_post_generate_for_date_201(
+    mock_get_client: MagicMock,
+    mock_generate: AsyncMock,
+    mock_persist: AsyncMock,
+) -> None:
+    """Generate digest for a specific date and return persisted row."""
+    mock_generate.return_value = (SAMPLE_DIGEST_ROW["content"], [101, 102, 103])
+    mock_get_client.return_value = _make_router_mock_client(
+        article_count=3,
+        digest_rows=[SAMPLE_DIGEST_ROW],
+    )
+
+    response = client.post("/api/digests/generate/2026-02-16")
+
+    assert response.status_code == 201
+    assert response.json()["digest_date"] == "2026-02-16"
+    mock_generate.assert_awaited_once()
+    mock_persist.assert_awaited_once()
+
+
+@patch("backend.routers.digest.persist_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.generate_daily_digest", new_callable=AsyncMock)
+@patch("backend.routers.digest.get_supabase_client")
+def test_post_generate_for_date_no_articles_404(
+    mock_get_client: MagicMock,
+    mock_generate: AsyncMock,
+    _mock_persist: AsyncMock,
+) -> None:
+    """Return 404 when no articles exist for the requested date."""
+    mock_get_client.return_value = _make_router_mock_client(article_count=0)
+
+    response = client.post("/api/digests/generate/2026-02-16")
+
+    assert response.status_code == 404
+    mock_generate.assert_not_awaited()
+
+
+@patch("backend.routers.digest.get_supabase_client")
+def test_list_digests(mock_get_client: MagicMock) -> None:
+    """Return digest list with pagination parameters."""
+    mock_get_client.return_value = _make_router_mock_client(
+        digest_rows=[SAMPLE_DIGEST_ROW]
+    )
+
+    response = client.get("/api/digests?limit=1&offset=0")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == 42

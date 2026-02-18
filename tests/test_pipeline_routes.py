@@ -42,6 +42,7 @@ def test_trigger_pipeline_accepts_valid_token(
         "articles_filtered": 1,
         "articles_summarized": 1,
         "newsletter_date": "2026-02-17",
+        "digest_generated": False,
     }
 
     response = client.post(
@@ -50,6 +51,7 @@ def test_trigger_pipeline_accepts_valid_token(
     )
 
     assert response.status_code == 200
+    assert response.json()["digest_generated"] is False
 
 
 @patch("backend.routers.pipeline.get_settings")
