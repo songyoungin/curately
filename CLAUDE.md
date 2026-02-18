@@ -80,7 +80,8 @@ RSS Feeds → **Collector** (feedparser, dedup by source_url) → **Scorer** (Ge
 - `types/` — TypeScript type definitions matching backend Pydantic models
 - `components/` — NavBar, ArticleCard, CategorySection, DateHeader, common UI (LoadingSpinner, ErrorDisplay, EmptyState)
 - `mocks/` — MSW mock data and API handlers for development
-- Pages: Today (main feed by category), Archive (calendar browse), Bookmarks (detailed summaries), Rewind (weekly trends), Settings (feeds + interests)
+- Route map: `/login` (Login), `/` (Today), `/digest` (Digest), `/archive` (Archive), `/bookmarks` (Bookmarks), `/rewind` (Rewind), `/settings` (Settings)
+- Pages (NavBar order): Today (main feed by category), Digest (daily synthesized briefing), Archive (calendar browse), Bookmarks (detailed summaries), Rewind (weekly trends), Settings (feeds + interests)
 
 ### Key Design Decisions
 
