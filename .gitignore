@@ -38,6 +38,12 @@ frontend/.vite/
 .serena/
 .playwright-mcp/
 
+# Cloudflare
+.wrangler/
+
+# Proof images
+*-proof.png
+
 # OS files
 .DS_Store
 Thumbs.db
