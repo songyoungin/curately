@@ -238,4 +238,37 @@ test.describe('Today Page', () => {
     await expect(k8sLike).toHaveClass(/text-gray-400/);
     await expect(k8sBookmark).toHaveClass(/text-amber-500/);
   });
+
+  test('should filter articles when ?articles= query param is present', async ({
+    page,
+  }) => {
+    await page.goto('/?articles=1,2');
+
+    await expect(page.getByText('Showing 2 articles from Digest')).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: 'GPT-5 Launch Imminent: Key Changes to Expect',
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: 'Building Reliable AI Agents with Tool Use',
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: 'Fine-tuning LLMs on Custom Datasets: A Practical Guide',
+      }),
+    ).toHaveCount(0);
+    await expect(page.getByText('2 articles', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: /show all/i }).click();
+    await expect(page).toHaveURL('/');
+    await expect(page.getByText('10 articles')).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: 'Fine-tuning LLMs on Custom Datasets: A Practical Guide',
+      }),
+    ).toBeVisible();
+  });
 });

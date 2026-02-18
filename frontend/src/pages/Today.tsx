@@ -92,7 +92,7 @@ export default function Today() {
         <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-blue-900">
-              Showing {sortedArticles.length} article(s) from Digest
+              Showing {sortedArticles.length} articles from Digest
             </p>
             <button
               type="button"

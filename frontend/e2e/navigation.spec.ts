@@ -9,6 +9,10 @@ test.describe('Navigation', () => {
   test('should navigate between all pages', async ({ page }) => {
     await page.goto('/');
 
+    // Navigate to Digest
+    await page.getByRole('link', { name: /digest/i }).click();
+    await expect(page).toHaveURL('/digest');
+
     // Navigate to Archive
     await page.getByRole('link', { name: /archive/i }).click();
     await expect(page).toHaveURL('/archive');
