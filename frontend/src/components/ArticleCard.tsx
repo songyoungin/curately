@@ -19,9 +19,21 @@ function ScoreBadge({ score }: { score: number }) {
 
   return (
     <span
+      data-testid="score-badge"
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${colorClasses}`}
     >
       {score.toFixed(2)}
+    </span>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  return (
+    <span
+      data-testid="category-badge"
+      className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600"
+    >
+      {category}
     </span>
   );
 }
@@ -31,6 +43,8 @@ export default function ArticleCard({
   onLike,
   onBookmark,
 }: ArticleCardProps) {
+  const primaryCategory = article.categories[0];
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow border border-gray-100">
       <a
@@ -48,6 +62,7 @@ export default function ArticleCard({
         {article.relevance_score != null && (
           <ScoreBadge score={article.relevance_score} />
         )}
+        {primaryCategory && <CategoryBadge category={primaryCategory} />}
       </div>
 
       {article.summary && (

@@ -1,6 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 test.describe('Archive Page', () => {
+  const categorySectionHeader = (page: Page, label: string) =>
+    page.locator('section > div > span', { hasText: label }).first();
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/archive');
     // Wait for editions to load (calendar or list should be visible)
@@ -43,7 +46,7 @@ test.describe('Archive Page', () => {
     ).toBeVisible();
 
     // Verify category sections appear (articles have AI/ML, DevOps, Backend, Frontend)
-    await expect(page.getByText('AI/ML')).toBeVisible();
+    await expect(categorySectionHeader(page, 'AI/ML')).toBeVisible();
 
     // Verify the date cell is highlighted (aria-pressed)
     await expect(dateButton).toHaveAttribute('aria-pressed', 'true');
@@ -85,8 +88,8 @@ test.describe('Archive Page', () => {
     ).toBeVisible();
 
     // Verify category sections appear
-    await expect(page.getByText('AI/ML')).toBeVisible();
-    await expect(page.getByText('DevOps')).toBeVisible();
+    await expect(categorySectionHeader(page, 'AI/ML')).toBeVisible();
+    await expect(categorySectionHeader(page, 'DevOps')).toBeVisible();
   });
 
   test('should navigate between months using Previous/Next buttons', async ({
