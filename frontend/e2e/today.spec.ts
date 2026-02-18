@@ -38,12 +38,32 @@ test.describe('Today Page', () => {
     }
   });
 
-  test('should display all 4 category sections', async ({ page }) => {
-    const categories = ['AI/ML', 'Backend', 'DevOps', 'Frontend'];
+  test('should render articles as a flat score-sorted list', async ({ page }) => {
+    const scoreTexts = await page.getByTestId('score-badge').allTextContents();
+    const scores = scoreTexts.map((text) => Number(text));
 
-    for (const category of categories) {
-      await expect(page.getByText(category, { exact: true })).toBeVisible();
-    }
+    expect(scores.length).toBe(10);
+    expect(scores).toEqual([...scores].sort((a, b) => b - a));
+    await expect(page.getByRole('heading', { name: 'AI/ML' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Backend' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'DevOps' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Frontend' })).toHaveCount(0);
+  });
+
+  test('should show category badges on article cards', async ({ page }) => {
+    const gptCard = page
+      .getByRole('link', {
+        name: 'GPT-5 Launch Imminent: Key Changes to Expect',
+      })
+      .locator('..');
+    await expect(gptCard.getByTestId('category-badge')).toHaveText('AI/ML');
+
+    const k8sCard = page
+      .getByRole('link', {
+        name: 'Kubernetes 1.33 Release: What You Need to Know',
+      })
+      .locator('..');
+    await expect(k8sCard.getByTestId('category-badge')).toHaveText('DevOps');
   });
 
   test('should toggle like on an unliked article', async ({ page }) => {

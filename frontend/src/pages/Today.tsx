@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { Newspaper } from "lucide-react";
 
-import type { Article } from "../types";
 import DateHeader from "../components/DateHeader";
-import CategorySection from "../components/CategorySection";
+import ArticleCard from "../components/ArticleCard";
 import { ArticleCardSkeleton, ErrorDisplay, EmptyState } from "../components/common";
 import { useNewsletter, useArticleInteractions } from "../hooks";
 
@@ -15,6 +14,13 @@ export default function Today() {
   );
   const { articles, toggleLike, toggleBookmark } =
     useArticleInteractions(initialArticles);
+  const sortedArticles = useMemo(
+    () =>
+      [...articles].sort(
+        (a, b) => (b.relevance_score ?? -1) - (a.relevance_score ?? -1),
+      ),
+    [articles],
+  );
 
   if (loading) {
     return (
@@ -50,17 +56,6 @@ export default function Today() {
     );
   }
 
-  const articlesByCategory: Record<string, Article[]> = {};
-  for (const article of articles) {
-    const category = article.categories[0] || "Uncategorized";
-    if (!articlesByCategory[category]) {
-      articlesByCategory[category] = [];
-    }
-    articlesByCategory[category].push(article);
-  }
-
-  const sortedCategories = Object.keys(articlesByCategory).sort();
-
   return (
     <div>
       <header className="pb-4 border-b border-gray-200">
@@ -73,12 +68,11 @@ export default function Today() {
       <div className="mt-6">
         <DateHeader date={newsletter.date} articleCount={articles.length} />
       </div>
-      <div className="mt-6">
-        {sortedCategories.map((category) => (
-          <CategorySection
-            key={category}
-            category={category}
-            articles={articlesByCategory[category]}
+      <div className="mt-6 space-y-4">
+        {sortedArticles.map((article) => (
+          <ArticleCard
+            key={article.id}
+            article={article}
             onLike={toggleLike}
             onBookmark={toggleBookmark}
           />
