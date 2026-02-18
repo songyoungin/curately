@@ -7,24 +7,19 @@ structured results (hot_topics, trend_changes, suggestions).
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from datetime import date, timedelta
 from typing import Any, TypedDict, cast
 
-from google import genai
 from google.genai import types
 from supabase import Client
 
 from backend.config import Settings, get_settings
-from backend.services.scorer import create_gemini_client
+from backend.services.gemini import call_gemini_with_retry, create_gemini_client
 from backend.time_utils import kst_midnight_utc_iso, today_kst
 
 logger = logging.getLogger(__name__)
-
-_MAX_RETRIES = 3
-_BASE_RETRY_DELAY = 1.0
 
 
 class RewindReport(TypedDict):
@@ -116,10 +111,13 @@ async def generate_rewind_report(
     gemini_client = create_gemini_client(settings)
 
     try:
-        response_text = await _call_gemini_with_retry(
+        response_text = await call_gemini_with_retry(
             gemini_client,
             settings.gemini.model,
             prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            ),
         )
         report = _parse_rewind_response(response_text)
     except Exception:
@@ -288,56 +286,6 @@ def _build_rewind_prompt(
         articles_section=articles_section,
         previous_report_section=previous_report_section,
     )
-
-
-async def _call_gemini_with_retry(
-    client: genai.Client,
-    model: str,
-    prompt: str,
-) -> str:
-    """Call the Gemini API with exponential backoff retry.
-
-    Args:
-        client: Gemini API client.
-        model: Model name to use.
-        prompt: Prompt text.
-
-    Returns:
-        Gemini response text.
-
-    Raises:
-        Exception: Last exception when all retries are exhausted.
-    """
-    last_exception: Exception | None = None
-    for attempt in range(_MAX_RETRIES):
-        try:
-            response = await client.aio.models.generate_content(
-                model=model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                ),
-            )
-            return response.text or ""
-        except Exception as exc:
-            last_exception = exc
-            if attempt < _MAX_RETRIES - 1:
-                delay = _BASE_RETRY_DELAY * (2**attempt)
-                logger.warning(
-                    "Gemini rewind call failed (attempt %d/%d), retrying in %.1fs: %s",
-                    attempt + 1,
-                    _MAX_RETRIES,
-                    delay,
-                    type(exc).__name__,
-                )
-                await asyncio.sleep(delay)
-            else:
-                logger.error(
-                    "Gemini rewind call failed after %d attempts: %s",
-                    _MAX_RETRIES,
-                    type(exc).__name__,
-                )
-    raise last_exception  # type: ignore[misc]
 
 
 def _parse_rewind_response(text: str) -> RewindReport:

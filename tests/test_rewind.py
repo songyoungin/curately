@@ -191,7 +191,7 @@ def _make_router_mock_client(
 
 
 @pytest.mark.asyncio
-@patch("backend.services.rewind.asyncio.sleep", new_callable=AsyncMock)
+@patch("backend.services.gemini.asyncio.sleep", new_callable=AsyncMock)
 @patch("backend.services.rewind.create_gemini_client")
 @patch("backend.services.rewind.get_settings")
 async def test_generate_rewind_happy_path(
@@ -233,7 +233,7 @@ async def test_generate_rewind_happy_path(
 
 
 @pytest.mark.asyncio
-@patch("backend.services.rewind.asyncio.sleep", new_callable=AsyncMock)
+@patch("backend.services.gemini.asyncio.sleep", new_callable=AsyncMock)
 @patch("backend.services.rewind.create_gemini_client")
 @patch("backend.services.rewind.get_settings")
 async def test_generate_rewind_first_report(
@@ -324,7 +324,7 @@ async def test_generate_rewind_uses_kst_midnight_cutoff(
 
 
 @pytest.mark.asyncio
-@patch("backend.services.rewind.asyncio.sleep", new_callable=AsyncMock)
+@patch("backend.services.gemini.asyncio.sleep", new_callable=AsyncMock)
 @patch("backend.services.rewind.create_gemini_client")
 @patch("backend.services.rewind.get_settings")
 async def test_generate_rewind_gemini_failure(
