@@ -80,9 +80,18 @@ def _make_service_supabase_mock(
     mock_digests = MagicMock()
 
     article_data = articles if articles is not None else []
-    mock_articles.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
-        data=article_data
-    )
+
+    def _gte_side_effect(column: str, min_score: float) -> MagicMock:
+        filtered = [
+            article
+            for article in article_data
+            if float(article.get(column, 0.0) or 0.0) >= min_score
+        ]
+        query = MagicMock()
+        query.order.return_value.execute.return_value = MagicMock(data=filtered)
+        return query
+
+    mock_articles.select.return_value.eq.return_value.gte.side_effect = _gte_side_effect
 
     ups_data = upsert_result if upsert_result is not None else [{"id": 1}]
     mock_digests.upsert.return_value.execute.return_value = MagicMock(data=ups_data)
@@ -184,9 +193,9 @@ async def test_generate_digest_happy_path(
     )
 
     assert digest["headline"] == gemini_response["headline"]
-    assert digest["sections"][0]["article_ids"] == [101, 103]
+    assert digest["sections"][0]["article_ids"] == [101]
     assert digest["key_takeaways"] == ["AI adoption is accelerating."]
-    assert article_ids == [101, 102, 103]
+    assert article_ids == [101]
     mock_gemini.aio.models.generate_content.assert_called_once()
 
 
@@ -235,7 +244,7 @@ async def test_generate_digest_gemini_failure(
     )
 
     assert digest == _NO_ARTICLES_DIGEST
-    assert article_ids == [101, 102, 103]
+    assert article_ids == [101]
 
 
 @pytest.mark.asyncio
@@ -257,7 +266,7 @@ async def test_generate_digest_malformed_json(mock_create_gemini: MagicMock) -> 
     )
 
     assert digest == _NO_ARTICLES_DIGEST
-    assert article_ids == [101, 102, 103]
+    assert article_ids == [101]
 
 
 def test_parse_digest_response_partial() -> None:
@@ -306,7 +315,37 @@ async def test_article_index_to_id_mapping(mock_create_gemini: MagicMock) -> Non
     mock_gemini.aio.models.generate_content = AsyncMock(return_value=mock_response)
     mock_create_gemini.return_value = mock_gemini
 
-    supabase = _make_service_supabase_mock(articles=SAMPLE_ARTICLES)
+    supabase = _make_service_supabase_mock(
+        articles=[
+            {
+                "id": 101,
+                "title": "A1",
+                "summary": "S1",
+                "categories": ["AI/ML"],
+                "keywords": ["a1"],
+                "relevance_score": 0.99,
+                "source_url": "https://example.com/a1",
+            },
+            {
+                "id": 102,
+                "title": "A2",
+                "summary": "S2",
+                "categories": ["DevOps"],
+                "keywords": ["a2"],
+                "relevance_score": 0.95,
+                "source_url": "https://example.com/a2",
+            },
+            {
+                "id": 103,
+                "title": "A3",
+                "summary": "S3",
+                "categories": ["Backend"],
+                "keywords": ["a3"],
+                "relevance_score": 0.90,
+                "source_url": "https://example.com/a3",
+            },
+        ]
+    )
 
     digest, _article_ids = await generate_daily_digest(
         supabase,
@@ -315,6 +354,44 @@ async def test_article_index_to_id_mapping(mock_create_gemini: MagicMock) -> Non
     )
 
     assert digest["sections"][0]["article_ids"] == [101, 103]
+
+
+@pytest.mark.asyncio
+@patch("backend.services.digest.create_gemini_client")
+async def test_generate_digest_filters_low_relevance_articles(
+    mock_create_gemini: MagicMock,
+) -> None:
+    """Only include articles with relevance_score >= 0.9 in digest input."""
+    mock_response = MagicMock()
+    mock_response.text = json.dumps(
+        {
+            "headline": "Summary",
+            "sections": [
+                {
+                    "theme": "AI/ML",
+                    "title": "Theme",
+                    "body": "Body",
+                    "article_ids": [1, 2, 3],
+                }
+            ],
+            "key_takeaways": [],
+            "connections": "",
+        }
+    )
+    mock_gemini = MagicMock()
+    mock_gemini.aio.models.generate_content = AsyncMock(return_value=mock_response)
+    mock_create_gemini.return_value = mock_gemini
+
+    supabase = _make_service_supabase_mock(articles=SAMPLE_ARTICLES)
+
+    digest, article_ids = await generate_daily_digest(
+        supabase,
+        digest_date="2026-02-18",
+        settings=_make_settings(),
+    )
+
+    assert article_ids == [101]
+    assert digest["sections"][0]["article_ids"] == [101]
 
 
 @pytest.mark.asyncio
