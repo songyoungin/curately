@@ -12,6 +12,7 @@ from backend.config import get_settings
 from backend.routers import (
     articles,
     auth,
+    digest,
     feeds,
     interests,
     newsletters,
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(feeds.router)
     app.include_router(interests.router)
     app.include_router(rewind.router)
+    app.include_router(digest.router)
     app.include_router(pipeline.router)
 
     return app
