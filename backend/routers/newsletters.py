@@ -1,6 +1,6 @@
 """Newsletter route handlers."""
 
-from datetime import date, datetime, timezone
+from datetime import date
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from backend.auth import get_current_user_id
 from backend.schemas.articles import NewsletterListItem, NewsletterResponse
 from backend.supabase_client import get_supabase_client
+from backend.time_utils import today_kst
 
 router = APIRouter(prefix="/api/newsletters", tags=["newsletters"])
 
@@ -94,7 +95,7 @@ async def get_today_newsletter(
     user_id: int = Depends(get_current_user_id),
 ) -> dict[str, Any]:
     """Return today's newsletter with articles sorted by relevance score."""
-    today = datetime.now(timezone.utc).date()
+    today = today_kst()
     return _get_newsletter_by_date(today, user_id)
 
 

@@ -1,7 +1,6 @@
 """Rewind report route handlers."""
 
-from datetime import timedelta, timezone
-from datetime import datetime as dt
+from datetime import timedelta
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,6 +9,7 @@ from backend.auth import get_current_user_id
 from backend.schemas.rewind import RewindReportResponse
 from backend.services.rewind import generate_rewind_report, persist_rewind_report
 from backend.supabase_client import get_supabase_client
+from backend.time_utils import today_kst
 
 router = APIRouter(prefix="/api/rewind", tags=["rewind"])
 
@@ -99,7 +99,7 @@ async def generate_rewind(
     """
     client = get_supabase_client()
 
-    today = dt.now(timezone.utc).date()
+    today = today_kst()
     period_start = today - timedelta(days=7)
     period_end = today
 

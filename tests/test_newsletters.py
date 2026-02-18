@@ -1,6 +1,6 @@
 """Newsletter router tests."""
 
-from datetime import datetime, timezone
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -166,19 +166,18 @@ def test_list_newsletters_pagination(mock_get_client: MagicMock) -> None:
 # --- GET /api/newsletters/today ---
 
 
-@patch("backend.routers.newsletters.datetime")
+@patch("backend.routers.newsletters.today_kst")
 @patch("backend.routers.newsletters.get_supabase_client")
 def test_get_today_newsletter(
-    mock_get_client: MagicMock, mock_datetime: MagicMock
+    mock_get_client: MagicMock, mock_today_kst: MagicMock
 ) -> None:
     """Verify today's newsletter returns articles with interaction flags.
 
-    Mock: datetime.now returns fixed date, articles for that date exist,
+    Mock: KST today returns fixed date, articles for that date exist,
           default user exists, no interactions.
     Expects: 200 status, newsletter with articles, flags default to false.
     """
-    mock_datetime.now.return_value = datetime(2026, 2, 16, tzinfo=timezone.utc)
-    mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+    mock_today_kst.return_value = date(2026, 2, 16)
     mock_get_client.return_value = _make_mock_client(
         articles=[SAMPLE_ARTICLE],
         user={"id": 1},
@@ -196,18 +195,17 @@ def test_get_today_newsletter(
     assert data["articles"][0]["is_bookmarked"] is False
 
 
-@patch("backend.routers.newsletters.datetime")
+@patch("backend.routers.newsletters.today_kst")
 @patch("backend.routers.newsletters.get_supabase_client")
 def test_get_today_newsletter_empty(
-    mock_get_client: MagicMock, mock_datetime: MagicMock
+    mock_get_client: MagicMock, mock_today_kst: MagicMock
 ) -> None:
     """Verify 404 when no articles for today.
 
-    Mock: datetime.now returns fixed date, no articles for that date.
+    Mock: KST today returns fixed date, no articles for that date.
     Expects: 404 status.
     """
-    mock_datetime.now.return_value = datetime(2026, 2, 16, tzinfo=timezone.utc)
-    mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+    mock_today_kst.return_value = date(2026, 2, 16)
     mock_get_client.return_value = _make_mock_client(articles=[])
 
     response = client.get("/api/newsletters/today")
