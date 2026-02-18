@@ -298,6 +298,28 @@ async def test_generate_rewind_no_likes(
     assert report["suggestions"] == []
 
 
+@pytest.mark.asyncio
+@patch("backend.services.rewind.today_kst", return_value=date(2026, 2, 17))
+async def test_generate_rewind_uses_kst_midnight_cutoff(
+    _mock_today_kst: MagicMock,
+) -> None:
+    """Verify liked-article cutoff uses KST day boundary converted to UTC."""
+    supabase = _make_supabase_mock(
+        interactions=[],
+        articles=[],
+    )
+
+    await generate_rewind_report(supabase, user_id=1, settings=_make_settings())
+
+    gte_call = supabase.table(
+        "interactions"
+    ).select.return_value.eq.return_value.eq.return_value.gte.call_args
+    assert gte_call is not None
+    field_name, cutoff = gte_call.args
+    assert field_name == "created_at"
+    assert cutoff == "2026-02-09T15:00:00+00:00"
+
+
 # --- generate_rewind_report: Gemini failure ---
 
 
@@ -466,7 +488,7 @@ def test_get_rewind_by_id_404(mock_get_client: MagicMock) -> None:
 # --- POST /api/rewind/generate ---
 
 
-@patch("backend.routers.rewind.dt")
+@patch("backend.routers.rewind.today_kst")
 @patch("backend.routers.rewind.persist_rewind_report", new_callable=AsyncMock)
 @patch("backend.routers.rewind.generate_rewind_report", new_callable=AsyncMock)
 @patch("backend.routers.rewind.get_supabase_client")
@@ -474,7 +496,7 @@ def test_post_generate_rewind_creates_report(
     mock_get_client: MagicMock,
     mock_generate: AsyncMock,
     mock_persist: AsyncMock,
-    mock_dt: MagicMock,
+    mock_today_kst: MagicMock,
 ) -> None:
     """Verify POST endpoint triggers generation and returns new report.
 
@@ -482,9 +504,7 @@ def test_post_generate_rewind_creates_report(
            Supabase returns full report row after persist.
     Expects: 201 status, service called with correct period, report returned.
     """
-    mock_now = MagicMock()
-    mock_now.date.return_value = date(2026, 2, 16)
-    mock_dt.now.return_value = mock_now
+    mock_today_kst.return_value = date(2026, 2, 17)
 
     mock_generate.return_value = {
         "overview": "LLM agents were the focus this week.",
@@ -526,3 +546,7 @@ def test_post_generate_rewind_creates_report(
 
     mock_generate.assert_called_once()
     mock_persist.assert_called_once()
+    persist_call = mock_persist.call_args
+    assert persist_call is not None
+    assert persist_call.args[3] == date(2026, 2, 10)
+    assert persist_call.args[4] == date(2026, 2, 17)

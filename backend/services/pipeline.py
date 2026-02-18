@@ -8,12 +8,12 @@ and persist results to the database.
 from __future__ import annotations
 
 import logging
-from datetime import date
 from typing import Any, TypedDict, cast
 
 from supabase import Client
 
 from backend.config import Settings, get_settings
+from backend.time_utils import today_kst
 from backend.services.collector import collect_articles
 from backend.services.scorer import score_articles
 from backend.services.interests import apply_time_decay
@@ -56,7 +56,7 @@ async def run_daily_pipeline(
     if settings is None:
         settings = get_settings()
 
-    today = date.today().isoformat()
+    today = today_kst().isoformat()
     logger.info("Starting daily pipeline for %s", today)
 
     # Stage 1: Collect articles

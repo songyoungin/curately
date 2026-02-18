@@ -163,6 +163,7 @@ def test_filter_articles_empty_when_all_below_threshold() -> None:
 
 
 @pytest.mark.asyncio
+@patch("backend.services.pipeline.today_kst", return_value=date(2026, 2, 16))
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
@@ -174,6 +175,7 @@ async def test_pipeline_happy_path(
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
+    _mock_today_kst: MagicMock,
 ) -> None:
     """Verify full pipeline happy path with 3 articles, 2 above threshold.
 
@@ -203,7 +205,7 @@ async def test_pipeline_happy_path(
     assert result["articles_scored"] == 3
     assert result["articles_filtered"] == 2
     assert result["articles_summarized"] == 2
-    assert result["newsletter_date"] == date.today().isoformat()
+    assert result["newsletter_date"] == "2026-02-16"
 
     # Verify persist was called for 2 articles
     upsert_calls = client.table("articles").upsert.call_args_list
@@ -347,6 +349,7 @@ async def test_pipeline_filtering_threshold_and_top_n(
 
 
 @pytest.mark.asyncio
+@patch("backend.services.pipeline.today_kst", return_value=date(2026, 2, 16))
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
@@ -358,6 +361,7 @@ async def test_pipeline_newsletter_date_is_today(
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
     _mock_decay: AsyncMock,
+    _mock_today_kst: MagicMock,
 ) -> None:
     """Verify newsletter_date in result and persisted rows matches today's date.
 
@@ -374,7 +378,7 @@ async def test_pipeline_newsletter_date_is_today(
 
     result = await run_daily_pipeline(client, settings)
 
-    expected_date = date.today().isoformat()
+    expected_date = "2026-02-16"
     assert result["newsletter_date"] == expected_date
 
     # Verify persisted row has correct newsletter_date

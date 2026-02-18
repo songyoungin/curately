@@ -7,8 +7,9 @@ Start and stop functions are designed to be called from the FastAPI lifespan.
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -16,10 +17,12 @@ from backend.config import get_settings
 from backend.services.pipeline import run_daily_pipeline
 from backend.services.rewind import generate_rewind_report, persist_rewind_report
 from backend.supabase_client import get_supabase_client
+from backend.time_utils import today_kst
 
 logger = logging.getLogger(__name__)
 
 _scheduler: AsyncIOScheduler | None = None
+_KST = ZoneInfo("Asia/Seoul")
 
 
 def start_scheduler() -> AsyncIOScheduler:
@@ -34,7 +37,7 @@ def start_scheduler() -> AsyncIOScheduler:
     global _scheduler  # noqa: PLW0603
 
     settings = get_settings()
-    _scheduler = AsyncIOScheduler()
+    _scheduler = AsyncIOScheduler(timezone=_KST)
 
     # Daily pipeline job
     _scheduler.add_job(
@@ -42,6 +45,7 @@ def start_scheduler() -> AsyncIOScheduler:
         trigger="cron",
         hour=settings.schedule.daily_pipeline_hour,
         minute=settings.schedule.daily_pipeline_minute,
+        timezone=_KST,
         id="daily_pipeline",
         name="Daily newsletter pipeline",
         replace_existing=True,
@@ -59,6 +63,7 @@ def start_scheduler() -> AsyncIOScheduler:
         day_of_week=settings.schedule.rewind_day_of_week,
         hour=settings.schedule.rewind_hour,
         minute=settings.schedule.rewind_minute,
+        timezone=_KST,
         id="weekly_rewind",
         name="Weekly rewind analysis",
         replace_existing=True,
@@ -113,7 +118,7 @@ async def run_weekly_rewind_for_all_users() -> None:
             logger.warning("No users found, skipping rewind")
             return
 
-        period_end = date.today()
+        period_end = today_kst()
         period_start = period_end - timedelta(days=7)
 
         for user in users:

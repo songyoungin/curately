@@ -19,6 +19,7 @@ from supabase import Client
 
 from backend.config import Settings, get_settings
 from backend.services.scorer import create_gemini_client
+from backend.time_utils import kst_midnight_utc_iso, today_kst
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +184,8 @@ def _fetch_liked_articles(
     Returns:
         List of article dicts with title, categories, and keywords.
     """
-    cutoff = (date.today() - timedelta(days=days)).isoformat()
+    cutoff_date = today_kst() - timedelta(days=days)
+    cutoff = kst_midnight_utc_iso(cutoff_date)
 
     # Get liked article IDs
     interaction_resp = (
