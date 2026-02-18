@@ -14,6 +14,7 @@ from backend.config import Settings, get_settings
 from backend.services.gemini import call_gemini_with_retry, create_gemini_client
 
 logger = logging.getLogger(__name__)
+_MIN_DIGEST_RELEVANCE_SCORE = 0.9
 
 
 class DigestSection(TypedDict):
@@ -170,6 +171,7 @@ async def generate_daily_digest(
         client.table("articles")
         .select("id, title, summary, categories, keywords, relevance_score, source_url")
         .eq("newsletter_date", digest_date)
+        .gte("relevance_score", _MIN_DIGEST_RELEVANCE_SCORE)
         .order("relevance_score", desc=True)
         .execute()
     )
