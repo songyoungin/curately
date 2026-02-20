@@ -9,6 +9,19 @@ test.describe('Bookmarks Page', () => {
     ).toBeVisible();
   });
 
+  test('should display bookmarks in most-recently-bookmarked order', async ({
+    page,
+  }) => {
+    // With MSW mock sorting by descending ID, PostgreSQL (id=8) should appear before Kubernetes (id=5)
+    const cards = page.locator('[data-testid="bookmark-card"]');
+    await expect(cards).toHaveCount(2);
+
+    const firstCardText = await cards.nth(0).textContent();
+    const secondCardText = await cards.nth(1).textContent();
+    expect(firstCardText).toContain('PostgreSQL');
+    expect(secondCardText).toContain('Kubernetes');
+  });
+
   test('should display bookmarked articles', async ({ page }) => {
     // Verify both bookmarked articles are visible
     await expect(
