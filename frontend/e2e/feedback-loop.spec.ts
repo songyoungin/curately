@@ -170,14 +170,14 @@ test.describe('Feedback Loop - Cross-Page Interactions', () => {
       page.getByText('PostgreSQL 17: Performance Improvements Deep Dive'),
     ).toBeVisible();
 
-    // Find the "Remove bookmark" button for Kubernetes article (first one)
-    const removeButtons = page.getByRole('button', {
+    // Find the "Remove bookmark" button for Kubernetes article
+    const k8sBookmarkCard = page.locator('[data-testid="bookmark-card"]', { hasText: 'Kubernetes 1.33 Release' });
+    const removeButton = k8sBookmarkCard.getByRole('button', {
       name: 'Remove bookmark',
     });
-    await expect(removeButtons).toHaveCount(2);
 
-    // Remove bookmark from the first article (Kubernetes 1.33)
-    await removeButtons.first().click();
+    // Remove bookmark from the Kubernetes article
+    await removeButton.click();
 
     // Verify Kubernetes article is removed from Bookmarks
     await expect(
