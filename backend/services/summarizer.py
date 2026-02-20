@@ -33,8 +33,8 @@ class DetailedSummary(TypedDict):
 
 _BASIC_SUMMARY_PROMPT = """\
 You are a tech newsletter editor writing for Korean tech professionals.
-Given the article title and content below, write a concise summary in Korean (2-3 sentences).
-Focus on the key takeaways and why this matters to tech professionals.
+Given the article title and content below (and any attached images like charts or tables), write a concise summary in Korean (2-3 sentences).
+Focus on the key takeaways, data from images if relevant, and why this matters to tech professionals.
 
 Title: {title}
 
@@ -45,7 +45,8 @@ Write the summary in Korean. Output ONLY the summary text, nothing else."""
 
 _DETAILED_SUMMARY_PROMPT = """\
 You are a tech newsletter editor writing for Korean tech professionals.
-Given the article title and content below, produce a detailed analysis in Korean.
+Given the article title and content below (and any attached images like charts or tables), produce a detailed analysis in Korean.
+Ensure you analyze the attached images to include key performance metrics or architectural details in your analysis.
 
 Title: {title}
 
@@ -85,7 +86,7 @@ def _truncate_content(content: str | None) -> str:
 async def _call_gemini_with_retry(
     client: genai.Client,
     model: str,
-    contents: str,
+    contents: str | list[Any],
     config: types.GenerateContentConfig | None = None,
 ) -> str:
     """Call the Gemini API with exponential backoff retry.
@@ -93,7 +94,7 @@ async def _call_gemini_with_retry(
     Args:
         client: Gemini API client.
         model: Model name to use.
-        contents: Prompt text.
+        contents: Prompt text or list of multimodal parts.
         config: Generation config (e.g., JSON response mode).
 
     Returns:
@@ -132,12 +133,33 @@ async def _call_gemini_with_retry(
     raise last_exception  # type: ignore[misc]
 
 
-async def generate_basic_summary(title: str, content: str | None) -> str:
+def _build_multimodal_contents(
+    prompt: str, images: list[bytes] | None
+) -> str | list[Any]:
+    """Build the contents object for Gemini.
+
+    Returns the prompt string if no images are provided.
+    Otherwise, returns a list containing the prompt string and the images
+    wrapped as Gemini Part objects.
+    """
+    if not images:
+        return prompt
+
+    contents: list[Any] = [prompt]
+    for img_bytes in images:
+        contents.append(types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"))
+    return contents
+
+
+async def generate_basic_summary(
+    title: str, content: str | None, images: list[bytes] | None = None
+) -> str:
     """Generate a basic Korean summary (2-3 sentences) for an article.
 
     Args:
         title: Article title.
         content: Article body or description.
+        images: Optional list of image byte contents for multimodal analysis.
 
     Returns:
         Korean summary text.
@@ -150,20 +172,25 @@ async def generate_basic_summary(title: str, content: str | None) -> str:
         title=title, content=truncated or "(no content)"
     )
 
+    contents = _build_multimodal_contents(prompt, images)
+
     text = await _call_gemini_with_retry(
         client=client,
         model=settings.gemini.model,
-        contents=prompt,
+        contents=contents,
     )
     return text.strip()
 
 
-async def generate_detailed_summary(title: str, content: str | None) -> DetailedSummary:
+async def generate_detailed_summary(
+    title: str, content: str | None, images: list[bytes] | None = None
+) -> DetailedSummary:
     """Generate a detailed analysis (background, key takeaways, keywords) for an article.
 
     Args:
         title: Article title.
         content: Article body or description.
+        images: Optional list of image byte contents for multimodal analysis.
 
     Returns:
         Dict containing background, takeaways, and keywords.
@@ -176,10 +203,12 @@ async def generate_detailed_summary(title: str, content: str | None) -> Detailed
         title=title, content=truncated or "(no content)"
     )
 
+    contents = _build_multimodal_contents(prompt, images)
+
     text = await _call_gemini_with_retry(
         client=client,
         model=settings.gemini.model,
-        contents=prompt,
+        contents=contents,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
         ),

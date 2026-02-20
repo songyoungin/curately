@@ -409,3 +409,38 @@ async def test_generate_basic_summary_long_content(
     # Content in prompt should be truncated
     assert "..." in prompt
     assert len(prompt) < 20_000
+
+
+# --- Multimodal content ---
+
+
+@pytest.mark.asyncio
+@patch("backend.services.summarizer.get_settings")
+@patch("backend.services.summarizer._get_client")
+async def test_generate_basic_summary_with_images(
+    mock_get_client: MagicMock,
+    mock_get_settings: MagicMock,
+) -> None:
+    """Verify that images are passed correctly to Gemini."""
+    mock_get_settings.return_value = _make_settings_mock()
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = _make_gemini_response(
+        _BASIC_SUMMARY_RESPONSE
+    )
+    mock_get_client.return_value = mock_client
+
+    images = [b"image1", b"image2"]
+    result = await generate_basic_summary(_SAMPLE_TITLE, _SAMPLE_CONTENT, images)
+
+    assert result == _BASIC_SUMMARY_RESPONSE
+    call_args = mock_client.models.generate_content.call_args
+    contents = call_args.kwargs["contents"]
+
+    assert isinstance(contents, list)
+    assert len(contents) == 3  # 1 text + 2 images
+    assert isinstance(contents[0], str)
+    assert _SAMPLE_TITLE in contents[0]
+
+    # We should have created Parts
+    assert contents[1].__class__.__name__ == "Part"
+    assert contents[2].__class__.__name__ == "Part"

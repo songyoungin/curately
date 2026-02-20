@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -30,7 +31,7 @@ def create_gemini_client(settings: Settings | None = None) -> genai.Client:
 async def call_gemini_with_retry(
     client: genai.Client,
     model: str,
-    prompt: str,
+    contents: str | list[Any],
     config: types.GenerateContentConfig | None = None,
 ) -> str:
     """Call the Gemini API (async) with exponential backoff retry.
@@ -41,7 +42,7 @@ async def call_gemini_with_retry(
     Args:
         client: Gemini API client.
         model: Model name (e.g., "gemini-2.5-flash").
-        prompt: Prompt text.
+        contents: Prompt text or list of multimodal parts.
         config: Generation config (e.g., JSON response mode).
 
     Returns:
@@ -55,7 +56,7 @@ async def call_gemini_with_retry(
         try:
             response = await client.aio.models.generate_content(
                 model=model,
-                contents=prompt,
+                contents=contents,
                 config=config,
             )
             return response.text or ""
