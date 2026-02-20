@@ -19,6 +19,7 @@ from backend.services.digest import generate_daily_digest, persist_digest
 from backend.services.scorer import score_articles
 from backend.services.interests import apply_time_decay
 from backend.services.summarizer import generate_basic_summary
+from backend.services.scraper import scrape_article, download_images
 
 logger = logging.getLogger(__name__)
 
@@ -143,18 +144,31 @@ async def run_daily_pipeline(
     logger.info("Filtered to %d article(s)", len(filtered))
 
     # Stage 5: Summarize articles
-    logger.info("Stage 5/7: Generating summaries")
+    logger.info("Stage 5/7: Generating summaries (with full content and images)")
     summarized_count = 0
     for article in filtered:
         try:
+            # Scrape full content and images
+            scraped = await scrape_article(article["source_url"])
+            images: list[bytes] = []
+
+            if scraped["image_urls"]:
+                images = await download_images(scraped["image_urls"], max_images=3)
+
+            # Use scraped markdown if available, else fallback to raw_content
+            content_to_summarize = scraped["markdown_text"] or article.get(
+                "raw_content"
+            )
+
             summary = await generate_basic_summary(
                 article["title"],
-                article.get("raw_content"),
+                content_to_summarize,
+                images=images if images else None,
             )
             article["summary"] = summary
             summarized_count += 1
         except Exception:
-            logger.warning(
+            logger.exception(
                 "Failed to summarize article '%s', storing without summary",
                 article["title"],
             )

@@ -9,6 +9,7 @@ from backend.services.pipeline import (
     _filter_articles,
     run_daily_pipeline,
 )
+from backend.services.scraper import ScrapedContent
 
 _EMPTY_DIGEST_RESULT: tuple[dict[str, object], list[int]] = (
     {"headline": "", "sections": [], "key_takeaways": [], "connections": ""},
@@ -180,6 +181,8 @@ def test_filter_articles_empty_when_all_below_threshold() -> None:
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
+@patch("backend.services.pipeline.download_images", new_callable=AsyncMock)
+@patch("backend.services.pipeline.scrape_article", new_callable=AsyncMock)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -187,6 +190,8 @@ async def test_pipeline_happy_path(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    mock_scrape: AsyncMock,
+    mock_download: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_today_kst: MagicMock,
     _mock_generate_digest: AsyncMock,
@@ -209,6 +214,10 @@ async def test_pipeline_happy_path(
         _make_score_result(1, 0.2),
         _make_score_result(2, 0.6),
     ]
+    mock_scrape.return_value = ScrapedContent(
+        markdown_text="Full text", image_urls=["http://img.com/1"]
+    )
+    mock_download.return_value = [b"img_bytes"]
     mock_summarize.return_value = "Test summary"
 
     client = _make_supabase_mock()
@@ -295,6 +304,8 @@ async def test_pipeline_scoring_failure(
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
+@patch("backend.services.pipeline.download_images", new_callable=AsyncMock)
+@patch("backend.services.pipeline.scrape_article", new_callable=AsyncMock)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -302,6 +313,8 @@ async def test_pipeline_summarization_failure(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    mock_scrape: AsyncMock,
+    mock_download: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_generate_digest: AsyncMock,
     _mock_persist_digest: AsyncMock,
@@ -315,6 +328,7 @@ async def test_pipeline_summarization_failure(
     articles = [_make_article("Art 1", source_url="https://example.com/1")]
     mock_collect.return_value = articles
     mock_score.return_value = [_make_score_result(0, 0.8)]
+    mock_scrape.return_value = ScrapedContent(markdown_text="", image_urls=[])
     mock_summarize.side_effect = RuntimeError("Summary failed")
 
     client = _make_supabase_mock()
@@ -347,6 +361,8 @@ async def test_pipeline_summarization_failure(
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
+@patch("backend.services.pipeline.download_images", new_callable=AsyncMock)
+@patch("backend.services.pipeline.scrape_article", new_callable=AsyncMock)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -354,6 +370,8 @@ async def test_pipeline_filtering_threshold_and_top_n(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    mock_scrape: AsyncMock,
+    mock_download: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_generate_digest: AsyncMock,
     _mock_persist_digest: AsyncMock,
@@ -401,6 +419,8 @@ async def test_pipeline_filtering_threshold_and_top_n(
 @patch(
     "backend.services.pipeline.apply_time_decay", new_callable=AsyncMock, return_value=0
 )
+@patch("backend.services.pipeline.download_images", new_callable=AsyncMock)
+@patch("backend.services.pipeline.scrape_article", new_callable=AsyncMock)
 @patch("backend.services.pipeline.generate_basic_summary", new_callable=AsyncMock)
 @patch("backend.services.pipeline.score_articles", new_callable=AsyncMock)
 @patch("backend.services.pipeline.collect_articles", new_callable=AsyncMock)
@@ -408,6 +428,8 @@ async def test_pipeline_newsletter_date_is_today(
     mock_collect: AsyncMock,
     mock_score: AsyncMock,
     mock_summarize: AsyncMock,
+    mock_scrape: AsyncMock,
+    mock_download: AsyncMock,
     _mock_decay: AsyncMock,
     _mock_today_kst: MagicMock,
     _mock_generate_digest: AsyncMock,
