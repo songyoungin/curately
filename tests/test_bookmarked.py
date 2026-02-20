@@ -48,9 +48,9 @@ def _make_mock_client(
         MagicMock(data=user_data)
     )
 
-    # interactions.select(article_id).eq(user_id).eq(type=bookmark).execute()
+    # interactions.select(article_id, created_at).eq(user_id).eq(type=bookmark).order(created_at).execute()
     bookmark_data = bookmark_rows if bookmark_rows is not None else []
-    mock_interactions_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+    mock_interactions_table.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
         data=bookmark_data
     )
 

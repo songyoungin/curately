@@ -176,7 +176,7 @@ export default function BookmarkCard({
   onUnbookmark,
 }: BookmarkCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow border border-gray-100">
+    <div data-testid="bookmark-card" className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow border border-gray-100">
       {/* Title */}
       <a
         href={article.source_url}

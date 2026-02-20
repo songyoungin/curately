@@ -88,7 +88,10 @@ export const handlers = [
 
   // GET /api/articles/bookmarked (must be before /api/articles/:id to avoid route conflict)
   http.get('/api/articles/bookmarked', () => {
-    return HttpResponse.json(mockArticles.filter((a) => a.is_bookmarked));
+    const bookmarked = mockArticles.filter((a) => a.is_bookmarked);
+    // Simulate backend ordering: most recently bookmarked first (higher ID = more recent)
+    bookmarked.sort((a, b) => b.id - a.id);
+    return HttpResponse.json(bookmarked);
   }),
 
   // GET /api/articles/:id
