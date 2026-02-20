@@ -139,3 +139,98 @@ def test_get_article_with_interactions(mock_get_client: MagicMock) -> None:
     data = response.json()
     assert data["is_liked"] is True
     assert data["is_bookmarked"] is True
+
+
+# --- GET /api/articles/bookmarked ---
+
+
+@patch("backend.routers.articles.get_supabase_client")
+def test_list_bookmarked_articles_ordered_by_recent(mock_get_client: MagicMock) -> None:
+    """Verify bookmarked articles are sorted by bookmark time, newest first.
+
+    Mock: two bookmark interactions with different created_at timestamps,
+    two matching articles returned in id-ascending order by Supabase.
+    Expects: articles reordered so that the more recently bookmarked article comes first.
+    """
+    mock_client = MagicMock()
+
+    # interactions table: select("article_id, created_at").eq(user_id).eq(type).order(created_at desc)
+    mock_interactions = MagicMock()
+    mock_interactions.select.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
+        data=[
+            {"article_id": 2, "created_at": "2026-02-20T12:00:00+00:00"},
+            {"article_id": 1, "created_at": "2026-02-19T08:00:00+00:00"},
+        ]
+    )
+
+    # articles table: select(columns).in_(id, [...]).execute() — returns in id order
+    mock_articles = MagicMock()
+    mock_articles.select.return_value.in_.return_value.execute.return_value = MagicMock(
+        data=[
+            {
+                "id": 1,
+                "source_feed": "Feed A",
+                "source_url": "https://example.com/1",
+                "title": "Older Bookmark",
+                "author": "Author A",
+                "published_at": "2026-02-18T10:00:00+00:00",
+                "summary": "Summary 1",
+                "detailed_summary": None,
+                "relevance_score": 0.8,
+                "categories": ["tech"],
+                "keywords": ["python"],
+                "newsletter_date": "2026-02-18",
+            },
+            {
+                "id": 2,
+                "source_feed": "Feed B",
+                "source_url": "https://example.com/2",
+                "title": "Newer Bookmark",
+                "author": "Author B",
+                "published_at": "2026-02-19T10:00:00+00:00",
+                "summary": "Summary 2",
+                "detailed_summary": None,
+                "relevance_score": 0.7,
+                "categories": ["devops"],
+                "keywords": ["k8s"],
+                "newsletter_date": "2026-02-19",
+            },
+        ]
+    )
+
+    # _attach_interaction_flags needs interactions table for flag lookup
+    mock_flag_interactions = MagicMock()
+    mock_flag_interactions.select.return_value.eq.return_value.in_.return_value.execute.return_value = MagicMock(
+        data=[
+            {"article_id": 1, "type": "bookmark"},
+            {"article_id": 2, "type": "bookmark"},
+        ]
+    )
+
+    call_count = {"interactions": 0}
+
+    def route_table(name: str) -> MagicMock:
+        if name == "interactions":
+            call_count["interactions"] += 1
+            # First call: fetch bookmark article_ids (ordered)
+            # Second call: _attach_interaction_flags
+            if call_count["interactions"] == 1:
+                return mock_interactions
+            return mock_flag_interactions
+        if name == "articles":
+            return mock_articles
+        return MagicMock()
+
+    mock_client.table.side_effect = route_table
+    mock_get_client.return_value = mock_client
+
+    response = client.get("/api/articles/bookmarked")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    # Most recently bookmarked article should come first
+    assert data[0]["id"] == 2
+    assert data[0]["title"] == "Newer Bookmark"
+    assert data[1]["id"] == 1
+    assert data[1]["title"] == "Older Bookmark"
