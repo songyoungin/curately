@@ -74,12 +74,10 @@ test.describe('Bookmarks Page', () => {
   test('should remove article when clicking remove bookmark button', async ({
     page,
   }) => {
-    // Click the first "Remove bookmark" button (Kubernetes article)
-    const removeButtons = page.getByRole('button', {
-      name: 'Remove bookmark',
-    });
-    await expect(removeButtons).toHaveCount(2);
-    await removeButtons.first().click();
+    // Click the "Remove bookmark" button on the Kubernetes article specifically
+    const k8sCard = page.locator('[data-testid="bookmark-card"]', { hasText: 'Kubernetes' });
+    await expect(k8sCard).toBeVisible();
+    await k8sCard.getByRole('button', { name: 'Remove bookmark' }).click();
 
     // The Kubernetes article should be removed
     await expect(
@@ -92,6 +90,9 @@ test.describe('Bookmarks Page', () => {
     ).toBeVisible();
 
     // Only one remove button should remain
+    const removeButtons = page.getByRole('button', {
+      name: 'Remove bookmark',
+    });
     await expect(removeButtons).toHaveCount(1);
   });
 
