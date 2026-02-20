@@ -67,15 +67,19 @@ def _attach_interaction_flags(
 async def list_bookmarked_articles(
     user_id: int = Depends(get_current_user_id),
 ) -> list[dict[str, Any]]:
-    """Return all bookmarked articles for the authenticated user."""
+    """Return all bookmarked articles for the authenticated user.
+
+    Articles are sorted by bookmark creation time, most recent first.
+    """
     client = get_supabase_client()
 
-    # Fetch bookmark interaction article IDs
+    # Fetch bookmark interactions ordered by most recently bookmarked
     bookmark_result = (
         client.table("interactions")
-        .select("article_id")
+        .select("article_id, created_at")
         .eq("user_id", user_id)
         .eq("type", "bookmark")
+        .order("created_at", desc=True)
         .execute()
     )
     bookmark_rows = cast(list[dict[str, Any]], bookmark_result.data)
@@ -92,7 +96,11 @@ async def list_bookmarked_articles(
     )
     articles = cast(list[dict[str, Any]], articles_result.data)
 
-    return _attach_interaction_flags(articles, user_id)
+    # Reorder articles to match bookmark creation order (most recent first)
+    article_map = {a["id"]: a for a in articles}
+    ordered_articles = [article_map[aid] for aid in article_ids if aid in article_map]
+
+    return _attach_interaction_flags(ordered_articles, user_id)
 
 
 def _assert_article_exists(client: Any, article_id: int) -> dict[str, Any]:
